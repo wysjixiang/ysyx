@@ -1,5 +1,5 @@
 STUID = ysyx_22051468
-STUNAME = 暨翔
+STUNAME = test
 
 # DO NOT modify the following code!!!
 
