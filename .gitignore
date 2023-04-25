@@ -12,3 +12,9 @@
 !init.sh
 /fceux-am
 /nvboard
+
+####### newly added
+/npc/obj_dir
+
+
+
