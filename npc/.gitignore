@@ -11,3 +11,5 @@
 !README.md
 build/
 obj_dir/
+!/csrc/*
+!/vsrc/*

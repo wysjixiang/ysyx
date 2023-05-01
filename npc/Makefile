@@ -1,51 +1,72 @@
-Vfile := ./vsrc/
-Cfile := ./csrc/
 
-SRC_C := tb_alu
-SRC_V := alu
+TOPNAME := top
+NXDC_FILES = constr/top.nxdc
+INC_PATH ?=
+
+VERILATOR := verilator
+VERILATOR_CFLAGS += \
+	-MMD --build -cc -trace\
+	-O3 --x-assign fast --x-initial fast --noassert
+
+BUILD_DIR = ./build
+OBJ_DIR = $(BUILD_DIR)/obj_dir
+BIN = $(BUILD_DIR)/$(TOPNAME)
 
 
 .PHONY: default
-default:
-	@echo "------- Invalid command ---------"
-	@echo "v------Compile .v/.sv file to c++"
-	@echo "run----After -v, run this--------"
-	@echo "wave---Open GTKwave--------------"
+default: 
+	@echo "------- Invalid command ---------" 
+	@echo "run----Run based on Nvboard------" 
+	@echo "wave---Open GTKwave--------------" 
 	@echo "---------------------------------"
 
+$(shell mkdir -p $(BUILD_DIR))
 
-.PHONY: v
-v:	$(Vfile)$(SRC_V).v
-	@echo "------ Generate obj_dir ---------"
-	verilator --cc	$(Vfile)$(SRC_V).v
+SRC_AUTO_BIND := $(abspath $(BUILD_DIR)/auto_bind.cpp)
 
-.PHONY: run
-#run:	./obj_dir	V$(SRC_V).mk	V$(SRC_V)
-run:	
-	@echo "------ Verilate & Build ---------"
-	verilator -Wall --trace --cc $(Vfile)$(SRC_V).v --exe $(Cfile)$(SRC_C).cpp 
-	make -C obj_dir -f V$(SRC_V).mk V$(SRC_V)
-	./obj_dir/V$(SRC_V)
-	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
-	@echo "------ Complete! ----------------"
+$(SRC_AUTO_BIND): $(NXDC_FILES)
+	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
+
+VSRCS := $(shell find $(abspath ./vsrc) -name "*.v") 
+CSRCS := $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cpp" -or -name "*.cc")
+
+CSRCS += $(SRC_AUTO_BIND)
+
+#rules for NVBoard
+include $(NVBOARD_HOME)/scripts/nvboard.mk
+# rules for verilator
+INCFLAGS = $(addprefix -I, $(INC_PATH))
+# -I: directory to search for includes
+CFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
+# -D<Var>[=<value>] : Set preprocessor define
+LDFLAGS += -lSDL2 -lSDL2_image
+# -LDFLAGS : linker pre-object arguments for makefile 
+
+
+$(BIN): $(VSRCS) $(CSRCS) $(NVBOARD_ARCHIVE)
+	@rm -rf $(OBJ_DIR)
+	$(VERILATOR) $(VERILATOR_CFLAGS) \
+	--top-module $(TOPNAME) $^ \
+	$(addprefix -CFLAGS , $(CFLAGS)) $(addprefix -LDFLAGS , $(LDFLAGS)) \
+	--Mdir $(OBJ_DIR) --exe -o $(abspath $(BIN))
+	$(call git_commit, "Run bin file") # DO NOT REMOVE THIS LINE!!!
+
+
+run: $(BIN)
+	@$^
+
+clean:
+	rm -rf $(BUILD_DIR) $(wildcard *.vcd)
+
+
+.PHONY: run clean
+
 
 .PHONY:	wave
 wave:	waveform.vcd
 	@echo "------ Open GTKwaveform ---------"
 	gtkwave	waveform.vcd
 
-all:
-	@echo "Write this Makefile by your self."
-
-sim:
-	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
-	@echo "Write this Makefile by your self."
-
-
-.PHONY: clean
-clean:
-	@echo "---------clean---------"
-	rm -rf obj_dir 
-
 
 include ../Makefile
+# include for tracer-ysyx
