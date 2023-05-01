@@ -4,7 +4,7 @@ module top (
     input [7:0] sw,
     input ps2_clk,
     input ps2_data,
-    output [15:0] ledr,
+    output reg [15:0] ledr,
     output VGA_CLK,
     output VGA_HSYNC,
     output VGA_VSYNC,
@@ -38,10 +38,22 @@ assign seg5 = 'h0;
 assign seg6 = 'h0;
 assign seg7 = 'h0;
 
+// switch
+// assign ledr = {15'b0,sw[0] ^ sw[1]};
 
-assign ledr = {15'b0,sw[0] ^ sw[1]};
+// 4-1 mux
+always@(*) begin
+	case(sw[7:6])
+		2'b00: ledr = {15'h0,sw[0]};
+		
+		2'b01:ledr = {15'h0,sw[1]};
+		
+		2'b10:ledr = {15'h0,sw[2]};
+		
+		2'b11:ledr = {15'h0,sw[3]};
 
-
+	endcase
+end
 
 
 endmodule
