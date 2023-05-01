@@ -1,10 +1,10 @@
 module top (
     input clk,
     input rst,
-    input [7:0] sw,
+    input [15:0] sw,
     input ps2_clk,
     input ps2_data,
-    output reg [15:0] ledr,
+    output [15:0] ledr,
     output VGA_CLK,
     output VGA_HSYNC,
     output VGA_VSYNC,
@@ -29,31 +29,46 @@ assign VGA_BLANK_N = 'h0;
 assign VGA_R = 'h0;
 assign VGA_G = 'h0;
 assign VGA_B = 'h0;
-assign seg0 = 'h0;
-assign seg1 = 'h0;
-assign seg2 = 'h0;
-assign seg3 = 'h0;
-assign seg4 = 'h0;
-assign seg5 = 'h0;
-assign seg6 = 'h0;
-assign seg7 = 'h0;
+assign seg1 = 8'hff;
+assign seg2 = 8'hff;
+assign seg3 = 8'hff;
+assign seg4 = 8'hff;  
+assign seg5 = 8'hff;   
+assign seg6 = 8'hff;   
+assign seg7 = 8'hff;   
+                  
+wire [2:0] bin;
+assign ledr[2:0] = bin;
+
+encoder83 encoder_inst(
+	.in_code(sw[7:0]),
+	.en(sw[15]),
+	.flag(ledr[3]),
+	.out_code(bin)
+);
+
+bcd bcd_inst(
+	.in_bin({1'b0,bin}),
+	.out_dec(seg0)
+);
+
+endmodule
+
+
 
 // switch
 // assign ledr = {15'b0,sw[0] ^ sw[1]};
 
 // 4-1 mux
-always@(*) begin
-	case(sw[7:6])
-		2'b00: ledr = {15'h0,sw[0]};
-		
-		2'b01:ledr = {15'h0,sw[1]};
-		
-		2'b10:ledr = {15'h0,sw[2]};
-		
-		2'b11:ledr = {15'h0,sw[3]};
-
-	endcase
-end
-
-
-endmodule
+//always@(*) begin
+//	case(sw[15:14])
+//		2'b00: ledr = {15'h0,sw[0]};
+//		
+//		2'b01:ledr = {15'h0,sw[1]};
+//		
+//		2'b10:ledr = {15'h0,sw[2]};
+//		
+//		2'b11:ledr = {15'h0,sw[3]};
+//
+//	endcase
+//end
