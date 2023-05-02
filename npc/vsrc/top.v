@@ -37,20 +37,35 @@ assign seg5 = 8'hff;
 assign seg6 = 8'hff;   
 assign seg7 = 8'hff;   
                   
-wire [2:0] bin;
-assign ledr[2:0] = bin;
+//wire [2:0] bin;
+//assign ledr[2:0] = bin;
+//
+//encoder83 encoder_inst(
+//	.in_code(sw[7:0]),
+//	.en(sw[15]),
+//	.flag(ledr[3]),
+//	.out_code(bin)
+//);
 
-encoder83 encoder_inst(
-	.in_code(sw[7:0]),
-	.en(sw[15]),
-	.flag(ledr[3]),
-	.out_code(bin)
-);
+wire [2:0] op;
+assign op = sw[15:13];
+
 
 bcd bcd_inst(
-	.in_bin({1'b0,bin}),
+	.in_bin({1'b0,op}),
 	.out_dec(seg0)
 );
+
+alu alu_inst(
+	.in_a(sw[7:4]),
+	.in_b(sw[3:0]),
+	.opcode(op),
+	.overflow(ledr[6]),
+	.zero(ledr[15]),
+	.carry(ledr[4]),
+	.out_result(ledr[3:0])
+);
+
 
 endmodule
 
