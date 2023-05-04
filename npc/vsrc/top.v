@@ -2,6 +2,8 @@ module top (
     input clk,
     input rst,
     input [15:0] sw,
+		input btnr,
+		input btnu,
     input ps2_clk,
     input ps2_data,
     output [15:0] ledr,
@@ -29,13 +31,13 @@ assign VGA_BLANK_N = 'h0;
 assign VGA_R = 'h0;
 assign VGA_G = 'h0;
 assign VGA_B = 'h0;
-assign seg1 = 8'hff;
-assign seg2 = 8'hff;
-assign seg3 = 8'hff;
-assign seg4 = 8'hff;  
-assign seg5 = 8'hff;   
-assign seg6 = 8'hff;   
-assign seg7 = 8'hff;   
+//assign seg1 = 8'hff;
+//assign seg2 = 8'hff;
+//assign seg3 = 8'hff;
+//assign seg4 = 8'hff;  
+//assign seg5 = 8'hff;   
+//assign seg6 = 8'hff;   
+//assign seg7 = 8'hff;   
                   
 //wire [2:0] bin;
 //assign ledr[2:0] = bin;
@@ -66,6 +68,24 @@ alu alu_inst(
 	.out_result(ledr[3:0])
 );
 
+wire [7:0] prbs;
+
+bcd bcd_high(
+	.in_bin(prbs[7:4]),
+	.out_dec(seg2)
+);
+
+bcd bcd_low(
+	.in_bin(prbs[3:0]),
+	.out_dec(seg1)
+);
+
+
+prbs7 prbs7_inst(
+	.clk(btnr),
+	.reset(btnu),
+	.out(prbs)
+);
 
 endmodule
 
