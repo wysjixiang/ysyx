@@ -13,3 +13,4 @@ build/
 obj_dir/
 !/csrc/*
 !/vsrc/*
+!/constr/*
