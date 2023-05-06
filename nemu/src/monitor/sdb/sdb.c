@@ -43,7 +43,10 @@ static char* rl_gets() {
 }
 
 static int cmd_c(char *args) {
-  cpu_exec(-1);
+  //cpu_exec(-1);   //since cpu_exec( uint64 n), so if use -1(int) as argument, the real execute steps will
+                    // be large! this is why you just put 'c' once in NEMU conmand line but the whole 
+                    // program ended
+  cpu_exec(1);      // single step running
   return 0;
 }
 
@@ -97,16 +100,19 @@ void sdb_set_batch_mode() {
 }
 
 void sdb_mainloop() {
-  if (is_batch_mode) {
-    cmd_c(NULL);
+  if (is_batch_mode) {  // is_batch_mode = false
+    cmd_c(NULL);  
     return;
   }
 
+  // read command dead loop
   for (char *str; (str = rl_gets()) != NULL; ) {
     char *str_end = str + strlen(str);
 
     /* extract the first token as the command */
-    char *cmd = strtok(str, " ");
+    // attention! only the first token!
+    char *cmd = strtok(str, " "); // strtok: seperate string in str via delimiter.
+                                  // and the delim will be replaced by '\0'
     if (cmd == NULL) { continue; }
 
     /* treat the remaining string as the arguments,
@@ -123,9 +129,12 @@ void sdb_mainloop() {
 #endif
 
     int i;
-    for (i = 0; i < NR_CMD; i ++) {
-      if (strcmp(cmd, cmd_table[i].name) == 0) {
-        if (cmd_table[i].handler(args) < 0) { return; }
+    for (i = 0; i < NR_CMD; i ++) {       // guess NR_CMD = 3
+      if (strcmp(cmd, cmd_table[i].name) == 0) {  //if equ, function return value is 0
+        if (cmd_table[i].handler(args) < 0) { // if command is 'q', sdb_mainloop will return directly
+          nemu_state.state = NEMU_QUIT;   // if quit, change the state to NEMU_QUIT to avoid errors.
+          return; 
+        } 
         break;
       }
     }
