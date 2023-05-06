@@ -33,11 +33,11 @@ assign VGA_G = 'h0;
 assign VGA_B = 'h0;
 //assign seg1 = 8'hff;
 //assign seg2 = 8'hff;
-//assign seg3 = 8'hff;
-//assign seg4 = 8'hff;  
-//assign seg5 = 8'hff;   
-//assign seg6 = 8'hff;   
-//assign seg7 = 8'hff;   
+assign seg3 = 8'hff;
+assign seg4 = 8'hff;  
+assign seg5 = 8'hff;   
+assign seg6 = 8'hff;   
+assign seg7 = 8'hff;   
                   
 //wire [2:0] bin;
 //assign ledr[2:0] = bin;
