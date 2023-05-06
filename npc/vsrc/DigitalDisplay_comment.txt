@@ -1,8 +1,0 @@
-0号管脚： dot；
-1号管脚： middle row line;
-2号管脚： upper left column;
-3号管脚：	lower left column;
-4号管脚：	lower row line;
-5号管脚：	lower right column;
-6号管脚：	upper right column;
-7号管脚：	upper row line;

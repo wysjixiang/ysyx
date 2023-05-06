@@ -7,7 +7,7 @@
 #include <string>
 #include <stdarg.h>
 
-#define FPS 60
+#define FPS 180
 
 static uint64_t boot_time = 0;
 
