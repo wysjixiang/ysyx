@@ -43,10 +43,10 @@ static char* rl_gets() {
 }
 
 static int cmd_c(char *args) {
-  //cpu_exec(-1);   //since cpu_exec( uint64 n), so if use -1(int) as argument, the real execute steps will
+  cpu_exec(-1);     //since cpu_exec( uint64 n), so if use -1(int) as argument, the real execute steps will
                     // be large! this is why you just put 'c' once in NEMU conmand line but the whole 
                     // program ended
-  cpu_exec(1);      // single step running
+                    // single step running
   return 0;
 }
 
@@ -57,16 +57,55 @@ static int cmd_q(char *args) {
 
 static int cmd_help(char *args);
 
+
+// add more commands functions
+static int cmd_si(char *args) {
+  if(NULL == args) {
+    //printf("si default step forward 1\n");
+    cpu_exec(1); // default: single step
+    return 0;
+  } else{
+    int len_args = strlen(args);
+    uint64_t n_step = 0;
+    int value = 0;
+    int i=0;
+    while(i < len_args) {
+      value = args[i] - '0';
+      //printf("value = %d\n",value);
+      if(value > 9 || value < 0) { 
+        printf("Si arguments error, it must be numbers!\n");
+        return 1;
+      }
+      n_step = n_step * 10 + value;
+      i++;
+    }
+
+    if(n_step == 0) {
+      printf("Si arguments = 0. Please retype and make sure steps bigger than 0");
+      return 0;
+    } else{
+      //printf("Step forward %ld \n",n_step);
+      cpu_exec(n_step);
+      return 0;
+    }
+
+  }
+
+}
+
+
 static struct {
   const char *name;
   const char *description;
   int (*handler) (char *);
 } cmd_table [] = {
   { "help", "Display information about all supported commands", cmd_help },
-  { "c", "Continue the execution of the program", cmd_c },
-  { "q", "Exit NEMU", cmd_q },
+  { "c", "Continue the execution of the program",               cmd_c },
+  { "q", "Exit NEMU",                                           cmd_q },
 
   /* TODO: Add more commands */
+  { "si", "N steps forward. Add argument N after si with interval blank" , cmd_si },
+
 
 };
 
@@ -113,13 +152,17 @@ void sdb_mainloop() {
     // attention! only the first token!
     char *cmd = strtok(str, " "); // strtok: seperate string in str via delimiter.
                                   // and the delim will be replaced by '\0'
-    if (cmd == NULL) { continue; }
+    if (cmd == NULL) { 
+      continue; 
+    }
 
     /* treat the remaining string as the arguments,
      * which may need further parsing
      */
+
+    // args point to the following argument
     char *args = cmd + strlen(cmd) + 1;
-    if (args >= str_end) {
+    if (args >= str_end) {  // means only one token and no remaining string
       args = NULL;
     }
 
