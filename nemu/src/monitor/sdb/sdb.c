@@ -18,6 +18,9 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "sdb.h"
+// add include file
+#include <memory/paddr.h>
+
 
 static int is_batch_mode = false;
 
@@ -88,10 +91,111 @@ static int cmd_si(char *args) {
       cpu_exec(n_step);
       return 0;
     }
+  }
+}
 
+
+static int cmd_info(char* args) {
+  if(NULL == args)  {
+    printf("CMD_INFO: No valid arguments. Please retype\n");
+    return 1;
+  } else {
+      int len = strlen(args);
+      if(1 != len) {
+        printf("Length of arguments = 1. Valid: 'r' or 'w'\n");
+        return 1;
+      } else  {
+          switch(*args){
+            case  'r':
+              isa_reg_display();
+              break;
+            case  'w':
+              // TODO();
+              break;
+            default: 
+              printf("Invalid arguments. Valid: 'r' or 'w'\n");
+              break;
+          }
+      }
+    return 0;
   }
 
 }
+
+
+static int cmd_x(char *args)  {
+  if(NULL == args)  {
+    printf("CMD_X:No valid arguments. Please retype\n");
+    return 1;
+  } else{
+      char *args_1 = strtok(NULL, " ");
+      int len_args = strlen(args_1);
+      uint64_t n_step = 0;
+      int value = 0;
+      int i=0;
+      while(i < len_args) {
+        value = args[i] - '0';
+        //printf("value = %d\n",value);
+        if(value > 9 || value < 0) { 
+          printf("CMD_X arguments 1 error, it must be numbers!\n");
+          return 1;
+        }
+        n_step = n_step * 10 + value;
+        i++;
+      }
+
+      char * args_2 = strtok(NULL, " ");
+      if(NULL == args_2) {
+        printf("CMD_x arguments 2 lost\n");
+        return 1;
+      }
+      
+      len_args = strlen(args_2);
+			int PMem_addr = 0;
+      value = 0;
+			i = 2;
+			//printf("arg1 = %c, arg2 = %c", args_2[0],args_2[1]);
+      if(args_2[0] != '0' || (args_2[1] != 'x' && args_2[1] !='X')) {
+				printf("CMD_x: Argument 2 format wrong. Please input with the begining of '0x' or '0X'");
+				return 1;
+      }
+			
+			while(i < len_args){
+				if(args_2[i] >= '0' || args_2[i] <= '9'){
+					value = args_2[i] - '0';
+				}	else if(args_2[i] >= 'a' || args_2[i] <= 'f'){
+					value = args_2[i] - 87;
+				}	else if(args_2[i] >= 'A' || args_2[i] <= 'F'){
+					value = args_2[i] - 55;
+				} else {
+					printf("CMD_x: Argument 2 must be a hex format number.");
+					return 1;
+				}
+				PMem_addr = PMem_addr * 16 + value;
+        i++;
+			}
+
+			if(PMem_addr < 0x80000000 || 0 != (PMem_addr % 4)) // if out of mem or not 4K aligned
+			{
+				printf("THe PMem_addr out of band or not 4k aligned\n");
+        return 1;
+			}
+      if(n_step == 0) {
+        printf("CMD_X arguments = 0. Only print out first mem_addr value");
+        return 1;
+      } else {
+				for(int j=0;j< n_step; j++){
+					printf("THe PMem Addr: 0x%x, value = %ld\n", PMem_addr + 4*j, paddr_read(PMem_addr + 4*j,4));
+				}
+
+			}
+
+  }
+
+  return 0;
+}
+
+
 
 
 static struct {
@@ -105,7 +209,8 @@ static struct {
 
   /* TODO: Add more commands */
   { "si", "N steps forward. Add argument N after si with interval blank" , cmd_si },
-
+  { "info", "Print gpr or watch point status" ,                 cmd_info },
+  { "x", "Print mem value",                                     cmd_x },
 
 };
 
