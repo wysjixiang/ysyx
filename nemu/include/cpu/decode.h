@@ -44,6 +44,8 @@ static inline void pattern_decode(const char *str, int len,
     } \
   }
 
+// ; used to seperate multipie defined sentences
+// macro64(0) means macro(0) -> macro(63);
 #define macro2(i)  macro(i);   macro((i) + 1)
 #define macro4(i)  macro2(i);  macro2((i) + 2)
 #define macro8(i)  macro4(i);  macro4((i) + 4)
