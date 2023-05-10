@@ -214,7 +214,7 @@ static void spaceout(char* input){
 #define sign_check_q	(*q == ')' || (*q <= '9' && *q >= '0') )
 
 static bool check_parentheses(char *p,char *q){
-	printf("*p = %c\n*q = %c\n",*p,*q);
+//	printf("*p = %c\n*q = %c\n",*p,*q);
 	if(*p == '(' && *q == ')'){
 		int num = 1;
 		p++;
@@ -256,13 +256,13 @@ static bool check_parentheses(char *p,char *q){
 #define	op_div		4
 
 
-static void FindMainOp(char *p_start, char *p_end, char* args){
+static void FindMainOp(char *p_start, char *p_end, int* args){
 	if(!(*p_end == ')' || (*p_end >= '0' && *p_end <= '9'))){
 		printf("The end of expression is invalid\n");
 		assert(0);
 	}
 	#define	max_len 3
-	#define max_op_num 32
+	#define max_op_num 10000
 	int num =0;	// number of difference of ( and )
 	int pre_op = -1;	
 	// save previous sign to handle if errors and if mainop
@@ -274,7 +274,7 @@ static void FindMainOp(char *p_start, char *p_end, char* args){
 	// 4 means )
 	char *p = p_start;
 	char *q = p_end;
-	char pos[3][max_op_num];
+	int pos[3][max_op_num];
 	// pos[0][]	save the sign
 	// pos[1][] represents whether it is binocular or unary operator. if binocular, value = 1
 	// pos[2][]	save the offset from p_start
@@ -402,8 +402,8 @@ static void FindMainOp(char *p_start, char *p_end, char* args){
 		}
 		// check if there is to be a MainOp. if no MainOp, this expression should be a number with prefix of + or - or combination of them
 		// this is a special case like ++++----+---++++ number
-		// obviously, the number is at the end of expression or this expression would beconsidered as an invalid one
-		// so the number's address is the pos[2][index-1]+1, the sign should be calculate from via unary operators
+		// obviously, the number is at the end of expression or this expression would be considered as an invalid one
+		// so the number's address is the pos[2][index-1]+1, the sign should be calculate via unary operators
 		if(flag_binocular){
 			return;
 		}	else{
@@ -443,7 +443,7 @@ static int32_t eval(char* p, char* q){
 	}	else if(check_parentheses(p,q) == true){
 		return eval(p+1,q-1);
 	}	else{
-			char args[3];
+			int args[3];
 			/*
 			args[0] -> offset form p;
 			args[1] -> represents number or opcode; 0-number,1-add,2-minus,3-mult,4-div
@@ -451,9 +451,9 @@ static int32_t eval(char* p, char* q){
 			*/
 			//find main op
 			FindMainOp(p,q,args);
-			printf("offset = %d\n",args[0]);
-			printf("opcode = %d\n",args[1]);
-			printf("sign = %d\n",args[2]);
+			// printf("offset = %d\n",args[0]);
+			// printf("opcode = %d\n",args[1]);
+			// printf("sign = %d\n",args[2]);
 			char *p0 = p + args[0];
 			// analyze args
 			// if expression is a number with prefix of + and -
@@ -492,7 +492,7 @@ static int32_t eval(char* p, char* q){
 }
 
 
-static int cmd_p(char *args){
+int cmd_p(char *args){
   if(NULL == args)  {
     printf("CMD_P:No valid arguments. Please retype\n");
     return 1;
@@ -500,11 +500,11 @@ static int cmd_p(char *args){
 	spaceout(args);
 	char *p = args;
 	char *q = p + strlen(p) - 1;
-	printf("Expression = %d\n",eval(p,q));
-	return	0;
+	//printf("Expression = %d\n",eval(p,q));
+	return eval(p,q);
+	
+	//return	0;
 }
-
-
 
 
 static struct {
