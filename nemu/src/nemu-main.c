@@ -20,13 +20,6 @@ void am_init_monitor();
 void engine_start();
 int is_exit_status_bad();
 
-//
-extern int cmd_p(char* args);
-
-//
-
-#define TEST_NUM 201
-
 
 int main(int argc, char *argv[]) {
   /* Initialize the monitor. */
@@ -37,7 +30,7 @@ int main(int argc, char *argv[]) {
 #endif
 	
 	// gen-expr check
-	#define exper_check
+//#define exper_check
 #ifdef exper_check
 	FILE *file = fopen("/home/jixiang/ysyx-workbench/nemu/log", "r");
 	if(!file){
@@ -94,12 +87,10 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	return 0;
+
+#undef exper_check
 #endif
-	#undef exper_check
-	//
-	
-
-
+//
 
   /* Start engine. */
   engine_start();
