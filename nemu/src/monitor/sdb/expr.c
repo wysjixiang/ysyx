@@ -97,7 +97,7 @@ typedef struct token {
 } Token;
 
 
-#define TOKENNUM 30
+#define TOKENNUM 10000
 
 
 static Token tokens[TOKENNUM] __attribute__((used)) = {};
@@ -114,20 +114,20 @@ static bool make_token(char *e) {
     /* Try all rules one by one. */
     for (i = 0; i < NR_REGEX; i ++) {
       if (regexec(&re[i], e + position, 1, &pmatch, 0) == 0 && pmatch.rm_so == 0) {
-        char *substr_start = e + position;
+        //char *substr_start = e + position;
         int substr_len = pmatch.rm_eo;
 
-        Log("match rules[%d] = \"%s\" at position %d with len %d: %.*s",
-            i, rules[i].regex, position, substr_len, substr_len, substr_start);
+        // Log("match rules[%d] = \"%s\" at position %d with len %d: %.*s",
+        //     i, rules[i].regex, position, substr_len, substr_len, substr_start);
 
-        position += substr_len;
+        
 
         /* TODO: Now a new token is recognized with rules[i]. Add codes
          * to record the token in the array `tokens'. For certain types
          * of tokens, some extra actions should be performed.
          */
-			int j= 0;
-			word_t result = 0;
+			static int j= 0;
+			int64_t result = 0;
 
 				switch (rules[i].token_type) {
 					case	TK_NOTYPE:
@@ -144,6 +144,7 @@ static bool make_token(char *e) {
 						j = 2;
 						while(j < substr_len){
 							result = result * 16 + e[position + j] - '0';
+							j++;
 						}
 						tokens[nr_token].value = result;
 						nr_token++;
@@ -156,21 +157,23 @@ static bool make_token(char *e) {
 							tokens[nr_token].str[j] = e[position + j];
 							j++;
 						}
+						// todo;
 						tokens[nr_token].str[j] = '\0';
 						nr_token++;
 						break;
 					case	TK_NUM:
 						tokens[nr_token].type = rules[i].token_type;
-						int j= 0;
+						j= 0;
 						while(j < substr_len){
 							tokens[nr_token].str[j] = e[position + j];
 							j++;
 						}
 						tokens[nr_token].str[j] = '\0';
 						result = 0;
-						j = 2;
+						j = 0;
 						while(j < substr_len){
 							result = result * 10 + e[position + j] - '0';
+							j++;
 						}
 						tokens[nr_token].value = result;
 						nr_token++;
@@ -181,6 +184,7 @@ static bool make_token(char *e) {
 						nr_token++;
 						break;
         }
+				position += substr_len;
 				break;
       }
     }
@@ -231,7 +235,7 @@ static void FindMainOp(int p_start, int p_end, int* args){
 		printf("The end of expression is invalid\n");
 		assert(0);
 	}
-	#define max_op_num 10000
+
 	int num =0;	// number of difference of ( and )
 	int pre_op = -1;	
 	// save previous sign to handle if errors and if mainop
@@ -247,10 +251,10 @@ static void FindMainOp(int p_start, int p_end, int* args){
 	// 7 means	&&
 	// 8 means *    it could be mult, or dereference
 	// 9 means $
-	int pos[max_op_num];
+
 	// pos to record if it is a binocular operator!
 	// 1 if binocular, 0 if non
-	int index = 0;
+	int index = q-p+1;
 
 	// priority 
 	int prio = -1;
@@ -260,7 +264,7 @@ static void FindMainOp(int p_start, int p_end, int* args){
 // while loop for token recognization and unary operator
 	while( p <= q){
 		if(num > 0 || tokens[p].type == TK_LBRACKET || tokens[p].type == TK_RBRACKET){
-			pos[index++] = 0;
+
 			pre_op = op_rb;	// if it is in a ( ), there must not be a mainop, so we just search after )
 			if(tokens[p].type == TK_LBRACKET){
 				num++;
@@ -271,40 +275,40 @@ static void FindMainOp(int p_start, int p_end, int* args){
 			switch(tokens[p].type){
 				case '+':
 					if(pre_op == op_num || pre_op == op_rb){
-						pos[index++] = 1;
+
 						if(prio <= prio_add_minus) {
 							prio = prio_add_minus;
 							prio_pos = p;
 						}
-					}	else pos[index++] = 0;
+					}	
 					pre_op = op_add;
 					break;
 				
 				case '-':
 					if(pre_op == op_num || pre_op == op_rb){
-						pos[index++] = 1;
+
 						if(prio <= prio_add_minus) {
 							prio = prio_add_minus;
 							prio_pos = p;
 						}
-					}	else pos[index++] = 0;
+					}
 					pre_op = op_minus;
 					break;
 
 				case '*':
 					if(pre_op == op_num || pre_op == op_rb){
-						pos[index++] = 1;
+
 						if(prio <= prio_mult_div) {
 							prio = prio_mult_div;
 							prio_pos = p;
 						}
-					}	else  pos[index++] = 0;
+					}	
 					pre_op = op_mult_deref;
 					break;
 
 				case '/':
 					if(pre_op == op_num || pre_op == op_rb){
-						pos[index++] = 1;
+
 						if(prio <= prio_mult_div) {
 							prio = prio_mult_div;
 							prio_pos = p;
@@ -325,7 +329,7 @@ static void FindMainOp(int p_start, int p_end, int* args){
 						prio = prio_land;
 						prio_pos = p;	
 					}
-					pos[index++] = 1;
+
 					pre_op = op_land;
 					break;
 
@@ -338,7 +342,7 @@ static void FindMainOp(int p_start, int p_end, int* args){
 						prio = prio_eq_nqe;
 						prio_pos = p;
 					}
-					pos[index++] = 1;
+
 					pre_op = op_eq;
 					break;
 					
@@ -351,22 +355,21 @@ static void FindMainOp(int p_start, int p_end, int* args){
 						prio = prio_eq_nqe;
 						prio_pos = p;
 					}
-					pos[index++] = 1;
+
 					pre_op = op_neq;
 					break;
 
 				case TK_HEX:
-					pos[index++] = 0;
+
 					pre_op = op_num;
 					break;
 
 				case TK_REG:
-					pos[index++] = 0;
+
 					pre_op = op_num;
 					break;
 
 				case TK_NUM:
-					pos[index++] = 0;
 					pre_op = op_num;
 					break;
 				
@@ -398,12 +401,13 @@ static void FindMainOp(int p_start, int p_end, int* args){
 	if(prio == -1){
 		// no MainOp
 		// check the last token is a number
-		if(tokens[index-1].type != TK_NUM){
+		if(tokens[p_start + index-1].type != TK_NUM){
 			printf("Error! The unary expression's last token is not a number!\n");
+			printf("token is %d\naddr = %d\n",tokens[p_start + index-1].type,p_start + index-1);
 			assert(0);
 		}
 		// first check if it is a dereference
-		if(tokens[index-2].type == '*'){
+		if(tokens[p_start + index-2].type == '*'){
 			j = index -3;	
 			while(j > -1){
 				if(tokens[p_start+j].type != '*'){
@@ -462,7 +466,7 @@ static void FindMainOp(int p_start, int p_end, int* args){
 
 
 static bool check_parentheses(int p,int q){
-	if(tokens[p].type == TK_LBRACKET && tokens[p].type == TK_RBRACKET){
+	if(tokens[p].type == TK_LBRACKET && tokens[q].type == TK_RBRACKET){
 		int num = 1;
 		p++;
 		bool flag_not_paired = 0;
@@ -495,13 +499,13 @@ static bool check_parentheses(int p,int q){
 
 
 
-word_t eval(int p, int q){
+int64_t eval(int p, int q){
 	if(p > q){
 		//bad expression
 		printf("Invalid Expression\n");
 		assert(0);
 	} else if(p == q){
-		if(tokens[p].type == TK_NUM){
+		if(tokens[p].type == TK_NUM || tokens[p].type == TK_HEX || tokens[p].type == TK_REG){
 			return tokens[p].value;
 		}	else{
 			printf("Invalid non-number value\n");
@@ -524,8 +528,7 @@ word_t eval(int p, int q){
 			// printf("sign = %d\n",args[2]);
 			int addr = args[1];
 			int sign = args[3] ? 1 : -1;
-
-
+	
 			if(args[0]){
 				switch(tokens[addr].type){
 					case '+':
@@ -539,14 +542,14 @@ word_t eval(int p, int q){
 					case '*':
 					// if it is a dereference command
 						if(args[2] == 1){
-							return (*(uint64_t *)(eval(addr+1,q)) * sign);
+							return (*(int64_t *)(eval(addr+1,q)) * sign);
 						}	else{
 							return eval(p,addr-1) * eval(addr+1,q);
 						}
 						break;
 
 					case '/':
-						uint64_t dividend = eval(addr+1,q);
+						int64_t dividend = eval(addr+1,q);
 						if(dividend == 0) {
 							printf("Can not div 0\n");
 							assert(0);
@@ -588,15 +591,14 @@ word_t eval(int p, int q){
 
 
 
-word_t expr(char *e, bool *success) {
+int64_t expr(char *e, bool *success) {
   if (!make_token(e)) {
     *success = false;
     return 0;
   }
-
   /* TODO: Insert codes to evaluate the expression. */
 
-	*success = true;
+	*success = 1;
 	return eval(0,nr_token-1);
 
 }

@@ -21,6 +21,8 @@ void engine_start();
 int is_exit_status_bad();
 
 
+extern int64_t expr(char *e, bool *success);
+
 int main(int argc, char *argv[]) {
   /* Initialize the monitor. */
 #ifdef CONFIG_TARGET_AM
@@ -30,7 +32,7 @@ int main(int argc, char *argv[]) {
 #endif
 	
 	// gen-expr check
-//#define exper_check
+#define exper_check
 #ifdef exper_check
 	FILE *file = fopen("/home/jixiang/ysyx-workbench/nemu/log", "r");
 	if(!file){
@@ -54,7 +56,7 @@ int main(int argc, char *argv[]) {
 		char *value = strtok(buf," ");
 		// get value
 		int len = strlen(value);
-		int result =0;
+		int64_t result =0;
 		bool flag = 1;
 			switch(value[0]){
 				case '+':
@@ -78,9 +80,10 @@ int main(int argc, char *argv[]) {
 		// make Newline sign change to  end of line;
 		expression[exp_len-1] = '\0';
 
-		int cal = cmd_p(expression);
+		bool ok = 0;
+		int64_t cal = expr(expression,&ok);
 		if(result != cal){
-			printf("Value mismatched cnt: %d!\nThe correct: %d\nThe Calculated: %d\n",cnt++,result,cal);
+			printf("Value mismatched cnt: %d!\nThe correct: %lu\nThe Calculated: %lu\n",cnt++,result,cal);
 			assert(0);
 		}	else{
 			;

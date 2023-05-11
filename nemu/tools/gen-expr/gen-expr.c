@@ -27,8 +27,8 @@ static char *code_format =
 "#include <stdio.h>\n"
 "#include <stdint.h>\n"
 "int main() { "
-"  int32_t result = %s; "
-"  printf(\"%%d\", result); "
+"  int64_t result = %s; "
+"  printf(\"%%ld\", result); "
 "  return 0; "
 "}";
 
@@ -128,11 +128,11 @@ int main(int argc, char *argv[]) {
 // test how to check if this expression is valid
 
 
-    int result;
-    fscanf(fp, "%d", &result);
+    int64_t result;
+    fscanf(fp, "%ld", &result);
     pclose(fp);
 
-    printf("%d %s\n", result, buf);
+    printf("%ld %s\n", result, buf);
   }
   return 0;
 }

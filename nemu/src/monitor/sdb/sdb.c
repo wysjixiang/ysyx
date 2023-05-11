@@ -195,19 +195,19 @@ static int cmd_x(char *args)  {
   return 0;
 }
 
-static void spaceout(char* input){
-	char *p = input;
-	char *q = input;
+// static void spaceout(char* input){
+// 	char *p = input;
+// 	char *q = input;
 
-	while('\0' != *p){
-		if(' ' != *p){
-			*q++ = *p++;
-		}	else{
-			p++;
-		}
-	}
-	*q = '\0';
-}
+// 	while('\0' != *p){
+// 		if(' ' != *p){
+// 			*q++ = *p++;
+// 		}	else{
+// 			p++;
+// 		}
+// 	}
+// 	*q = '\0';
+// }
 
 int cmd_p(char *args){
   if(NULL == args)  {
@@ -215,9 +215,10 @@ int cmd_p(char *args){
     return 1;
   }	
 	uint64_t result;
-	bool *success;
-	result = expr(args,success);
-	if(*success) return 0;
+	bool success = 0;
+	result = expr(args,&success);
+	printf("result = %lu\n",result);
+	if(success) return 0;
 	else return 1;
 
 }
