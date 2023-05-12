@@ -24,6 +24,9 @@
 //	that is suitable for subsequent regexec() searches.
 //
 //
+#include <memory/paddr.h>
+
+
 
 enum {
   TK_NOTYPE = 256,
@@ -62,7 +65,7 @@ static struct rule {
   {"\\(",TK_LBRACKET},    // left bracket
   {"\\)",TK_RBRACKET},    // right bracket
   {"0x[0-9]+",TK_HEX},        // hex number
-  {"\\$[a-zA-Z][0-9]",TK_REG},   // register 
+  {"\\$[a-zA-Z0-9]+",TK_REG},   // register 
   {"[0-9]+",TK_NUM},        // number
 
   
@@ -114,11 +117,11 @@ static bool make_token(char *e) {
     /* Try all rules one by one. */
     for (i = 0; i < NR_REGEX; i ++) {
       if (regexec(&re[i], e + position, 1, &pmatch, 0) == 0 && pmatch.rm_so == 0) {
-        //char *substr_start = e + position;
+        char *substr_start = e + position;
         int substr_len = pmatch.rm_eo;
 
-        // Log("match rules[%d] = \"%s\" at position %d with len %d: %.*s",
-        //     i, rules[i].regex, position, substr_len, substr_len, substr_start);
+         Log("match rules[%d] = \"%s\" at position %d with len %d: %.*s",
+             i, rules[i].regex, position, substr_len, substr_len, substr_start);
 
         
 
@@ -127,7 +130,7 @@ static bool make_token(char *e) {
          * of tokens, some extra actions should be performed.
          */
 			static int j= 0;
-			int64_t result = 0;
+			word_t result = 0;
 
 				switch (rules[i].token_type) {
 					case	TK_NOTYPE:
@@ -154,11 +157,16 @@ static bool make_token(char *e) {
 						tokens[nr_token].type = rules[i].token_type;
 						j= 0;
 						while(j < substr_len){
-							tokens[nr_token].str[j] = e[position + j];
+							tokens[nr_token].str[j] = e[position + j+1];
 							j++;
 						}
-						// todo;
 						tokens[nr_token].str[j] = '\0';
+						bool str2val_success = 0;
+						tokens[nr_token].value = isa_reg_str2val(tokens[nr_token].str,&str2val_success);
+						if(str2val_success == 0){
+							printf("Error when reading value from gpr\n");
+							assert(0);
+						}
 						nr_token++;
 						break;
 					case	TK_NUM:
@@ -231,7 +239,7 @@ static void FindMainOp(int p_start, int p_end, int* args){
 	int p = p_start;
 	int q = p_end;
 
-	if(!(tokens[q].type == TK_RBRACKET || tokens[q].type == TK_NUM  )){
+	if(!(tokens[q].type == TK_RBRACKET || tokens[q].type == TK_NUM || tokens[q].type == TK_HEX || tokens[q].type == TK_REG )){
 		printf("The end of expression is invalid\n");
 		assert(0);
 	}
@@ -239,19 +247,7 @@ static void FindMainOp(int p_start, int p_end, int* args){
 	int num =0;	// number of difference of ( and )
 	int pre_op = -1;	
 	// save previous sign to handle if errors and if mainop
-	// -1 means nothing previous
-	// 0 means number
-	// 1 means + 
-	// 2 means -
-	// 2 means	/
-	// 3 means (
-	// 4 means )
-	// 5 means ==
-	// 6 means !=
-	// 7 means	&&
-	// 8 means *    it could be mult, or dereference
-	// 9 means $
-
+	
 	// pos to record if it is a binocular operator!
 	// 1 if binocular, 0 if non
 	int index = q-p+1;
@@ -401,7 +397,8 @@ static void FindMainOp(int p_start, int p_end, int* args){
 	if(prio == -1){
 		// no MainOp
 		// check the last token is a number
-		if(tokens[p_start + index-1].type != TK_NUM){
+		if(!(tokens[p_start + index-1].type == TK_NUM || tokens[p_start + index-1].type == TK_REG
+		|| tokens[p_start + index-1].type == TK_HEX) ){
 			printf("Error! The unary expression's last token is not a number!\n");
 			printf("token is %d\naddr = %d\n",tokens[p_start + index-1].type,p_start + index-1);
 			assert(0);
@@ -499,7 +496,7 @@ static bool check_parentheses(int p,int q){
 
 
 
-int64_t eval(int p, int q){
+word_t eval(int p, int q){
 	if(p > q){
 		//bad expression
 		printf("Invalid Expression\n");
@@ -542,14 +539,14 @@ int64_t eval(int p, int q){
 					case '*':
 					// if it is a dereference command
 						if(args[2] == 1){
-							return (*(int64_t *)(eval(addr+1,q)) * sign);
+							return sign * paddr_read((eval(addr+1,q)),8);
 						}	else{
 							return eval(p,addr-1) * eval(addr+1,q);
 						}
 						break;
 
 					case '/':
-						int64_t dividend = eval(addr+1,q);
+						word_t dividend = eval(addr+1,q);
 						if(dividend == 0) {
 							printf("Can not div 0\n");
 							assert(0);
@@ -585,13 +582,7 @@ int64_t eval(int p, int q){
 }
 
 
-
-
-
-
-
-
-int64_t expr(char *e, bool *success) {
+word_t expr(char *e, bool *success) {
   if (!make_token(e)) {
     *success = false;
     return 0;

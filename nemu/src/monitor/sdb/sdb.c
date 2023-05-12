@@ -110,7 +110,7 @@ static int cmd_info(char* args) {
               isa_reg_display();
               break;
             case  'w':
-              // TODO();
+              ShowWp();
               break;
             default: 
               printf("Invalid arguments. Valid: 'r' or 'w'\n");
@@ -127,71 +127,22 @@ static int cmd_x(char *args)  {
   if(NULL == args)  {
     printf("CMD_X:No valid arguments. Please retype\n");
     return 1;
-  } else{
-      char *args_1 = strtok(NULL, " ");
-      int len_args = strlen(args_1);
-      uint64_t n_step = 0;
-      int value = 0;
-      int i=0;
-      while(i < len_args) {
-        value = args[i] - '0';
-        //printf("value = %d\n",value);
-        if(value > 9 || value < 0) { 
-          printf("CMD_X arguments 1 error, it must be numbers!\n");
-          return 1;
-        }
-        n_step = n_step * 10 + value;
-        i++;
-      }
-
-      char * args_2 = strtok(NULL, " ");
-      if(NULL == args_2) {
-        printf("CMD_x arguments 2 lost\n");
-        return 1;
-      }
-      
-      len_args = strlen(args_2);
-			int PMem_addr = 0;
-
-			i = 2;
-			//printf("arg1 = %c, arg2 = %c", args_2[0],args_2[1]);
-      if(args_2[0] != '0' || (args_2[1] != 'x' && args_2[1] !='X')) {
-				printf("CMD_x: Argument 2 format wrong. Please input with the begining of '0x' or '0X'");
-				return 1;
-      }
-			
-			while(i < len_args){
-				if(args_2[i] >= '0' || args_2[i] <= '9'){
-					value = args_2[i] - '0';
-				}	else if(args_2[i] >= 'a' || args_2[i] <= 'f'){
-					value = args_2[i] - 87;
-				}	else if(args_2[i] >= 'A' || args_2[i] <= 'F'){
-					value = args_2[i] - 55;
-				} else {
-					printf("CMD_x: Argument 2 must be a hex format number.");
-					return 1;
-				}
-				PMem_addr = PMem_addr * 16 + value;
-        i++;
-			}
-
-			if(PMem_addr < 0x80000000 || 0 != (PMem_addr % 4)) // if out of mem or not 4K aligned
-			{
-				printf("THe PMem_addr out of band or not 4k aligned\n");
-        return 1;
-			}
-      if(n_step == 0) {
-        printf("CMD_X arguments = 0. Only print out first mem_addr value");
-        return 1;
-      } else {
-				for(int j=0;j< n_step; j++){
-					printf("THe PMem Addr: 0x%08x, value(hex) = 0x%08lx\n", PMem_addr + 4*j, paddr_read(PMem_addr + 4*j,4));
-				}
-
-			}
-
   }
-
+  char *p = strtok(NULL," ");
+  bool success = 0;
+  word_t num = expr(p,&success);
+  if(success == 0){
+    printf("CMD_X: arguments 1 error\n");
+    return 1;
+  }
+  word_t addr = 0;
+  p = args + strlen(p) +1;
+  printf("num = %lu, p0 = %c,p1 =%c, p2 = %c\n",num,p[0],p[1],p[2]);
+  addr = expr(p,&success);
+  
+  for(int i=0;i<num;i++){
+    printf("Addr: %lx, Value: %lu\n",addr + 8*i, paddr_read(addr + 8*i,8));
+  }
   return 0;
 }
 
@@ -224,6 +175,31 @@ int cmd_p(char *args){
 }
 
 
+static int cmd_w(char *args){
+	bool ret = 0;
+	ret = AddWp(args);
+	if(ret == 0){
+		printf("Add wp failed\n");
+		return 1;
+	}
+	else return 0;
+
+}
+
+
+// pay attention args is a str that represents a number points to the wp id
+static int cmd_d(char *args){
+	bool ret = 0;
+	ret = DelWp(args);
+	if(ret == 0){
+		printf("Del wp failed\n");
+		return 1;
+	}
+	else return 0;
+
+}
+
+
 static struct {
   const char *name;
   const char *description;
@@ -238,8 +214,8 @@ static struct {
   { "info", "Print gpr or watch point status" ,                 cmd_info },
   { "x", "Print mem value",                                     cmd_x },
 	{	"p", "Caculate Expression Value" ,													cmd_p},
-//	{	"w", "Sets Watch Point" ,																		cmd_w},
-//	{	"d", "Delete Watch Point" ,																	cmd_d},
+	{	"w", "Sets Watch Point" ,																		cmd_w},
+	{	"d", "Delete Watch Point" ,																	cmd_d},
 };
 
 #define NR_CMD ARRLEN(cmd_table)

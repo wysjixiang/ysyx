@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
 #endif
 	
 	// gen-expr check
-#define exper_check
+//#define exper_check
 #ifdef exper_check
 	FILE *file = fopen("/home/jixiang/ysyx-workbench/nemu/log", "r");
 	if(!file){

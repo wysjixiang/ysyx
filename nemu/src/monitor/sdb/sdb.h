@@ -19,7 +19,13 @@
 #include <common.h>
 
 word_t expr(char *e, bool *success);
+bool AddWp(char *str);
+bool DelWp(char *args);
+void ShowWp();
+void UpdateWp();
 
 int cmd_p(char *args);
+
+
 
 #endif
