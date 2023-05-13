@@ -40,6 +40,7 @@ extern void (*ref_difftest_regcpy)(void *dut, bool direction);
 extern void (*ref_difftest_exec)(uint64_t n);
 extern void (*ref_difftest_raise_intr)(uint64_t NO);
 
+
 static inline bool difftest_check_reg(const char *name, vaddr_t pc, word_t ref, word_t dut) {
   if (ref != dut) {
     Log("%s is different after executing instruction at pc = " FMT_WORD
@@ -49,5 +50,12 @@ static inline bool difftest_check_reg(const char *name, vaddr_t pc, word_t ref, 
   }
   return true;
 }
+
+
+// npc it is the current pc
+// void difftest_step(vaddr_t pc, vaddr_t npc) {
+//   // scan all the watch point and recalculate value
+  
+// }
 
 #endif

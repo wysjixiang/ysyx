@@ -17,7 +17,7 @@
 #include "local-include/reg.h"
 
 const char *regs[] = {
-  "$0", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
+  "x0", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
   "s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5",
   "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7",
   "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"
@@ -25,10 +25,31 @@ const char *regs[] = {
 
 void isa_reg_display() {
   for(int i=0;i<32;i++) {
-    printf("gpr[%d] = 0x%lx\n",i,gpr(i));
+    printf("gpr[%d](%s) = 0x%lu\n",i,regs[i],gpr(i));
   }
 }
 
 word_t isa_reg_str2val(const char *s, bool *success) {
+
+  if(s[0] == 'p' && s[1] == 'c'){
+    *success = 1;
+    return cpu.pc;
+  }
+  if(s[0] == 's' && s[1] == '1' && s[2] == '0'){
+    *success = 1;
+    return gpr(26);
+  }
+  if(s[0] == 's' && s[1] == '1' && s[2] == '1'){
+    *success = 1;
+    return gpr(27);
+  }
+
+  for(int j=0;j<32;j++){
+    if(regs[j][0] == s[0] && regs[j][1] == s[1] ){
+      *success = 1;
+      return gpr(j);
+    }
+  }
+
   return 0;
 }
