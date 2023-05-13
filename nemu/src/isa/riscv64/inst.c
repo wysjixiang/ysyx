@@ -55,15 +55,75 @@ static int decode_exec(Decode *s) {
   decode_operand(s, &rd, &src1, &src2, &imm, concat(TYPE_, type)); \
   __VA_ARGS__ ; \
 }
-
+  // add testing code
+  printf("Befor instpat\n");
+  printf("s->pc = %lx\n",s->pc);
+  printf("rd = %d\n",rd);
+  printf("scr1 = %ld\n",src1);
+  printf("scr2 = %ld\n",src2);
+  printf("imm = %ld\n",imm);
+  // ...............
   INSTPAT_START();
+ // add testing code
+  printf("instpat after start! \n");
+  printf("s->pc = %lx\n",s->pc);
+  printf("rd = %d\n",rd);
+  printf("scr1 = %ld\n",src1);
+  printf("scr2 = %ld\n",src2);
+  printf("imm = %ld\n",imm);
+  // ...............
+
+
   INSTPAT("??????? ????? ????? ??? ????? 00101 11", auipc  , U, R(rd) = s->pc + imm);
+  // add testing code
+  printf("instpat auipc \n");
+  printf("s->pc = %lx\n",s->pc);
+  printf("rd = %d\n",rd);
+  printf("scr1 = %ld\n",src1);
+  printf("scr2 = %ld\n",src2);
+  printf("imm = %ld\n",imm);
+  // ...............
   INSTPAT("??????? ????? ????? 011 ????? 00000 11", ld     , I, R(rd) = Mr(src1 + imm, 8));
+
+  // add testing code
+  printf("instpat ld \n");
+  printf("s->pc = %lx\n",s->pc);
+  printf("rd = %d\n",rd);
+  printf("scr1 = %ld\n",src1);
+  printf("scr2 = %ld\n",src2);
+  printf("imm = %ld\n",imm);
+  // ...............
+  
   INSTPAT("??????? ????? ????? 011 ????? 01000 11", sd     , S, Mw(src1 + imm, 8, src2));
+  // add testing code
+  printf("instpat sd \n");
+  printf("s->pc = %lx\n",s->pc);
+  printf("rd = %d\n",rd);
+  printf("scr1 = %ld\n",src1);
+  printf("scr2 = %ld\n",src2);
+  printf("imm = %ld\n",imm);
+  // ...............
 
   INSTPAT("0000000 00001 00000 000 00000 11100 11", ebreak , N, NEMUTRAP(s->pc, R(10))); // R(10) is $a0
+  // add testing code
+  printf("instpat 3 \n");
+  printf("s->pc = %lx\n",s->pc);
+  printf("rd = %d\n",rd);
+  printf("scr1 = %ld\n",src1);
+  printf("scr2 = %ld\n",src2);
+  printf("imm = %ld\n",imm);
+  // ...............
   INSTPAT("??????? ????? ????? ??? ????? ????? ??", inv    , N, INV(s->pc));
   INSTPAT_END();
+
+  // add testing code
+  printf("instpat end \n");
+  printf("s->pc = %lx\n",s->pc);
+  printf("rd = %d\n",rd);
+  printf("scr1 = %ld\n",src1);
+  printf("scr2 = %ld\n",src2);
+  printf("imm = %ld\n",imm);
+  // ...............
 
   R(0) = 0; // reset $zero to 0
 
