@@ -64,7 +64,7 @@ static struct rule {
   {"&&", TK_LAND},        // logic and
   {"\\(",TK_LBRACKET},    // left bracket
   {"\\)",TK_RBRACKET},    // right bracket
-  {"0x[0-9]+",TK_HEX},        // hex number
+  {"0x[0-9a-zA-Z]+",TK_HEX},        // hex number
   {"\\$[a-zA-Z0-9]+",TK_REG},   // register 
   {"[0-9]+",TK_NUM},        // number
 
@@ -146,7 +146,13 @@ static bool make_token(char *e) {
 						result = 0;
 						j = 2;
 						while(j < substr_len){
-							result = result * 16 + e[position + j] - '0';
+							if(e[position + j] >= '9' || e[position + j] <= '9'){
+								result = result * 16 + e[position + j] - '0';
+							}	else if(e[position + j] >= 'A' || e[position + j] <= 'F'){
+								result = result * 16 + e[position + j] - 55 ;
+							}	else{
+								result = result * 16 + e[position + j] - 87 ;
+							}
 							j++;
 						}
 						tokens[nr_token].value = result;
@@ -423,7 +429,7 @@ static void FindMainOp(int p_start, int p_end, int* args){
 				}
 			}
 			args[0] = 1;
-			args[1] = j + p_start ;
+			args[1] = j + p_start + 1 ;
 			args[2] = 1;
 			args[3] = sign_flag;
 			return ;

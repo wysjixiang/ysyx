@@ -137,7 +137,6 @@ static int cmd_x(char *args)  {
   }
   word_t addr = 0;
   p = args + strlen(p) +1;
-  printf("num = %lu, p0 = %c,p1 =%c, p2 = %c\n",num,p[0],p[1],p[2]);
   addr = expr(p,&success);
   
   for(int i=0;i<num;i++){
