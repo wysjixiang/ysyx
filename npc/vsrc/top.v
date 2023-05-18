@@ -2,8 +2,8 @@ module top (
     input clk,
     input rst,
     input [15:0] sw,
-	input btnr,
-	input btnu,
+		input btnr,
+		input btnu,
     input ps2_clk,
     input ps2_data,
     output [15:0] ledr,
@@ -74,7 +74,6 @@ always@(posedge ps2_clk or posedge btnr) begin
 	if(btnr) begin
 		cnt <= 11'd0;
 		light <= 1'b0;
-	
 	end else if(cnt == 11'd30) begin
 		cnt <= 11'd0;
 		light <= ~light;
@@ -96,11 +95,11 @@ keyboard_receiver keyboard_receiver_inst(
 	.ready							(ready),
 	.data								(key_data),
 	.valid							(valid),
-	.odd_parity_error			(odd_parity_error),
+	.odd_parity_error		(odd_parity_error),
 	.stop_error					(stop_error),
 	.empty							(empty),	
 	.full								(full),
-	.overflow	                    (overflow)
+	.overflow	          (overflow)
 
 );
 	

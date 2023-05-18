@@ -399,37 +399,21 @@ static void FindMainOp(int p_start, int p_end, int* args){
 
 	int j= 0;	
 	bool sign_flag = 1;
+	bool flag_deref = 0;
 
 	if(prio == -1){
 		// no MainOp
-		// check the last token is a number
-		if(!(tokens[p_start + index-1].type == TK_NUM || tokens[p_start + index-1].type == TK_REG
-		|| tokens[p_start + index-1].type == TK_HEX) ){
-			printf("Error! The unary expression's last token is not a number!\n");
-			printf("token is %d\naddr = %d\n",tokens[p_start + index-1].type,p_start + index-1);
-			assert(0);
-		}
 		// first check if it is a dereference
-		if(tokens[p_start + index-2].type == '*'){
-			j = index -3;	
-			while(j > -1){
-				if(tokens[p_start+j].type != '*'){
-						break;
-				}
-				j--;
+		for(j=0;j<index;j++){
+			if(tokens[j+p_start].type == '*') {
+			 	flag_deref = 1;
+				break;
 			}
+		}
 
-			// make sure no more * tokens
-			for(int i=0; i<j;i++){
-				if(tokens[p_start+i].type == '*'){
-					printf("Error! invalid tokens between dereference\n");
-					assert(0);
-				}	else if(tokens[p_start+i].type == '-'){
-					sign_flag = !sign_flag;
-				}
-			}
+		if(flag_deref){
 			args[0] = 1;
-			args[1] = j + p_start + 1 ;
+			args[1] = j + p_start ;
 			args[2] = 1;
 			args[3] = sign_flag;
 			return ;
