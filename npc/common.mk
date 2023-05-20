@@ -1,16 +1,8 @@
 
-TOPNAME := top
-NXDC_FILES = constr/top.nxdc
-INC_PATH ?=
-
 VERILATOR := verilator
 VERILATOR_CFLAGS += \
 	-MMD --build -cc -trace\
 	-O3 --x-assign fast --x-initial fast --noassert
-
-BUILD_DIR = ./build
-OBJ_DIR = $(BUILD_DIR)/obj_dir
-BIN = $(BUILD_DIR)/$(TOPNAME)
 
 
 .PHONY: default
@@ -27,8 +19,6 @@ SRC_AUTO_BIND := $(abspath $(BUILD_DIR)/auto_bind.cpp)
 $(SRC_AUTO_BIND): $(NXDC_FILES)
 	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
 
-VSRCS := $(shell find $(abspath ./vsrc) -name "*.v") 
-CSRCS := $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cpp" -or -name "*.cc")
 
 CSRCS += $(SRC_AUTO_BIND)
 
@@ -68,5 +58,5 @@ wave:	waveform.vcd
 	gtkwave	waveform.vcd
 
 
-include ../Makefile
+include ../../Makefile
 # include for tracer-ysyx
