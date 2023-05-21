@@ -12,6 +12,7 @@ module keyboard_decoder(
 //	output	reg [7:0] make_code,
 	output [7:0] data_out,
 	output [7:0] key_cnt,
+	output keypressed,
 	output shift,
 	output ctrl,
 	output caps
@@ -97,6 +98,7 @@ assign shift = state[0];
 assign ctrl = state[1];
 assign caps = state[2];
 assign data_out = key_data;
+assign keypressed = |key_reg;
 assign key_cnt = cnt;
 assign uppercase = state[0] | state[2];
 
@@ -258,6 +260,7 @@ always@(posedge clk or negedge rst_n) begin
 				if(addr == 6'd50 ) key_state <= 1'b0;
 				else if(addr != 6'd39 && key_reg[addr] == 1'b1) begin
 					key_state <= 1'b0;
+					key_reg[addr] <= 1'b0;
 					cnt <= cnt + 1'b1;
 				end
 			end
@@ -265,7 +268,6 @@ always@(posedge clk or negedge rst_n) begin
 	end
 
 end
-
 
 // encoder for key
 always@(*) begin

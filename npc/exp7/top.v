@@ -32,17 +32,212 @@ assign VGA_R = 'h0;
 assign VGA_G = 'h0;
 assign VGA_B = 'h0;
 
-assign seg0 = 8'hff;
-assign seg1 = 8'hff;
-assign seg2 = 8'hff;
-assign seg3 = 8'hff;
-assign seg4 = 8'hff;  
-assign seg5 = 8'hff;   
-assign seg6 = 8'hff;   
-assign seg7 = 8'hff;   
+assign seg4 = 8'hff;
+assign seg5 = 8'hff;
+
+
+wire ready;
+wire valid;	
+wire [7:0] key_data;
+
+wire odd_parity_error		;
+wire stop_error					;	
+wire empty						;
+wire full							;
+wire overflow					;
+wire shift							;
+wire ctrl							;
+wire caps		                    ;
+wire [7:0] asci_data			;
+wire [7:0] data_out			;			
+wire [7:0] key_cnt			;
+wire keypressed;
+
+reg [10:0] cnt;
+reg light;
+
+assign ledr[0] = shift;
+assign ledr[1] = ctrl;
+assign ledr[2] = caps;
+assign ledr[15] = odd_parity_error;
+assign ledr[14] = stop_error;
+assign ledr[13] = empty;
+assign ledr[12] = full;
+assign ledr[11] = overflow;
+
+assign ledr[7] = ~btnr;
+assign ledr[9] = light;
+
+// clk has no driver???? always 0
+// finally found: we drive clk in main.cpp!!!
+always@(posedge ps2_clk or posedge btnr) begin
+	if(btnr) begin
+		cnt <= 11'd0;
+		light <= 1'b0;
+	end else if(cnt == 11'd30) begin
+		cnt <= 11'd0;
+		light <= ~light;
+	
+	end else begin
+		light <= light;
+		cnt <= cnt + 1'b1;
+	
+	end
+
+end
+
+
+keyboard_receiver keyboard_receiver_inst(
+	.clk								(clk),
+	.rst_n							(rst),
+	.ps2_clk						(ps2_clk),
+	.ps2_data						(ps2_data),
+	.ready							(ready),
+	.data								(key_data),
+	.valid							(valid),
+	.odd_parity_error		(odd_parity_error),
+	.stop_error					(stop_error),
+	.empty							(empty),	
+	.full								(full),
+	.overflow	          (overflow)
+
+);
+	
+keyboard_decoder keyboard_decoder_inst(
+
+	.clk					(clk),
+	.rst_n				(rst),
+	.valid				(valid),
+	.data_in			(key_data),
+	.ready				(ready),
+	.asci_data			(asci_data),
+	.data_out			(data_out),
+	.keypressed		(keypressed),
+	.key_cnt			(key_cnt),
+	.shift					(shift),
+	.ctrl					(ctrl),
+	.caps				(caps)
+
+);	
+
+wire [7:0] data_scan, data_asci;
+wire [7:0] seg0_wire,seg1_wire,seg2_wire,seg3_wire;
+assign data_scan = data_out	;
+assign data_asci = asci_data;
+
+assign seg0 = keypressed ? seg0_wire	: 8'hFF;
+assign seg1 = keypressed ? seg1_wire	: 8'hFF;
+assign seg2 = keypressed ? seg2_wire	: 8'hFF;
+assign seg3 = keypressed ? seg3_wire	: 8'hFF;
+
+
+// scan code
+bcd bcd_scanlow(
+	.in_bin(data_scan[3:0]),
+	.out_dec(seg0_wire)
+);
+
+bcd bcd_scanhigh(
+	.in_bin(data_scan[7:4]),
+	.out_dec(seg1_wire)
+);
+
+// asci code
+bcd bcd_asciow(
+	.in_bin(data_asci[3:0]),
+	.out_dec(seg2_wire)
+);
+
+bcd bcd_ascihigh(
+	.in_bin(data_asci[7:4]),
+	.out_dec(seg3_wire)
+);
+
+// cnt
+bcd bcd_cntlow(
+	.in_bin(key_cnt[3:0]),
+	.out_dec(seg6)
+);
+
+bcd bcd_cnthigh(
+	.in_bin(key_cnt[7:4]),
+	.out_dec(seg7)
+);
+
+
+endmodule
 
 
 
+// switch
+// assign ledr = {15'b0,sw[0] ^ sw[1]};
 
-endmodule	
+// 4-1 mux
+//always@(*) begin
+//	case(sw[15:14])
+//		2'b00: ledr = {15'h0,sw[0]};
+//		
+//		2'b01:ledr = {15'h0,sw[1]};
+//		
+//		2'b10:ledr = {15'h0,sw[2]};
+//		
+//		2'b11:ledr = {15'h0,sw[3]};
+//
+//	endcase
+//end
 
+//assign seg1 = 8'hff;
+//assign seg2 = 8'hff;
+// assign seg3 = 8'hff;
+// assign seg4 = 8'hff;  
+// assign seg5 = 8'hff;   
+// assign seg6 = 8'hff;   
+// assign seg7 = 8'hff;   
+                  
+//wire [2:0] bin;
+//assign ledr[2:0] = bin;
+//
+//encoder83 encoder_inst(
+//	.in_code(sw[7:0]),
+//	.en(sw[15]),
+//	.flag(ledr[3]),
+//	.out_code(bin)
+//);
+
+// wire [2:0] op;
+// assign op = sw[15:13];
+
+
+// bcd bcd_inst(
+	// .in_bin({1'b0,op}),
+	// .out_dec(seg0)
+// );
+
+// alu alu_inst(
+	// .in_a(sw[7:4]),
+	// .in_b(sw[3:0]),
+	// .opcode(op),
+	// .overflow(ledr[6]),
+	// .zero(ledr[15]),
+	// .carry(ledr[4]),
+	// .out_result(ledr[3:0])
+// );
+
+// wire [7:0] prbs;
+
+// bcd bcd_high(
+	// .in_bin(prbs[7:4]),
+	// .out_dec(seg2)
+// );
+
+// bcd bcd_low(
+	// .in_bin(prbs[3:0]),
+	// .out_dec(seg1)
+// );
+
+
+// prbs7 prbs7_inst(
+	// .clk(btnr),
+	// .reset(btnu),
+	// .out(prbs)
+// );
