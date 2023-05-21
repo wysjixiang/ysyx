@@ -1,5 +1,6 @@
 *.*
 *
+!*.mk
 !*/
 !Makefile
 !*.mk
@@ -9,8 +10,8 @@
 !*.cpp
 !.gitignore
 !README.md
-build/
-obj_dir/
-!/csrc/*
-!/vsrc/*
-!/constr/*
+*/build/
+*/obj_dir/
+!*/csrc/*
+!*/vsrc/*
+!*/constr/*
