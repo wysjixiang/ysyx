@@ -177,7 +177,7 @@ void ShowWp(){
 		return ;
 	}
 	while(p != NULL){
-		printf("WP ID: %02d; pre_value = %lu, current_value = %lu; expression = %s\n",p->NO,p->pre_value,p->current_value,p->expression);
+		printf("WP ID: %02d; pre_value = 0x%016lx, current_value = 0x%016lx; expression = %s\n",p->NO,p->pre_value,p->current_value,p->expression);
 		p = p->next;
 	}
 	return;
@@ -196,7 +196,7 @@ void UpdateWp(){
 				printf("Error when update Wp-%d\n",p->NO);
 			}
 			if(p->current_value != p->pre_value){
-				printf("WP ID:%d status changed! pre_value = %lu, current_value = %lu; Expression = %s\n",p->NO,
+				printf("WP ID:%d status changed! pre_value = 0x%016lx, current_value = 0x%016lx; Expression = %s\n",p->NO,
 				p->pre_value,p->current_value,p->expression);
 				if(!(nemu_state.state == NEMU_END || nemu_state.state == NEMU_ABORT))
 					nemu_state.state = NEMU_STOP;

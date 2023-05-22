@@ -421,6 +421,10 @@ static void FindMainOp(int p_start, int p_end, int* args){
 			// if it is not a dereference, make sure no * character.
 			sign_flag = 1;
 			for(int i=0; i<index;i++){
+				if(tokens[p_start+i].type == TK_NUM ||tokens[p_start+i].type == TK_REG || tokens[p_start+i].type == TK_HEX ){
+					printf("Invalid EXPR. There is no operation sign!\n");
+					assert(0);
+				}
 				if(tokens[p_start+i].type == '-') sign_flag = !sign_flag;
 			}
 			args[0] = 0;

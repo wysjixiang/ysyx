@@ -140,7 +140,7 @@ static int cmd_x(char *args)  {
   addr = expr(p,&success);
   
   for(int i=0;i<num;i++){
-    printf("Addr: %lx, Value: %lu\n",addr + 8*i, paddr_read(addr + 8*i,8));
+    printf("Addr: 0x%08lx, Value: 0x%016lx\n",addr + 8*i, paddr_read(addr + 8*i,8));
   }
   return 0;
 }
@@ -167,7 +167,7 @@ int cmd_p(char *args){
 	uint64_t result;
 	bool success = 0;
 	result = expr(args,&success);
-	printf("result = %lu\n",result);
+	printf("result = 0x%016lx\n",result);
 	if(success) return 0;
 	else return 1;
 
