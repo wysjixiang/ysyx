@@ -109,7 +109,7 @@ static void decode_operand(Decode *s, int *rd, word_t *src1, word_t *src2, word_
   INSTPAT("??????? ????? ????? 100 ????? 00000 11", LBU     , I, \
     R(rd) = Mr(src1 + imm,1) ); \
   INSTPAT("??????? ????? ????? 000 ????? 00110 11", ADDIW   , I, \
-    R(rd) = SEXT(((int32_t)src1 + (int32_t)imm) , 32 )  );  \
+    R(rd) = SEXT(BITS(src1 + imm,31,0) ,32)  );  \
   INSTPAT("000000? ????? ????? 001 ????? 00100 11", SLLI   , I,\
     R(rd) = src1 << BITS(imm,5,0) );\
   INSTPAT("000000? ????? ????? 101 ????? 00100 11", SRLI   , I,\
@@ -119,13 +119,13 @@ static void decode_operand(Decode *s, int *rd, word_t *src1, word_t *src2, word_
     (src1 >> BITS(imm,5,0)):\
      src1 >> BITS(imm,5,0)); \
   INSTPAT("0000000 ????? ????? 001 ????? 00110 11", SLLIW   , I,\
-    R(rd) = src1 << BITS(imm,4,0) );\
+    R(rd) = SEXT(BITS(BITS(src1,31,0) << BITS(imm,4,0),31,0),32) );\
   INSTPAT("0000000 ????? ????? 101 ????? 00110 11", SRLIW   , I,\
-    R(rd) = src1 >> BITS(imm,4,0) );\
+    R(rd) = SEXT(BITS(BITS(src1,31,0) >> BITS(imm,4,0),31,0),32) );\
   INSTPAT("0100000 ????? ????? 101 ????? 00110 11", SRAIW   , I,\
-    R(rd) = BITS(src1,63,63) ? (SEXT(1,1) << (64-BITS(imm,4,0)))| \
-    (src1 >> BITS(imm,4,0)):\
-     src1 >> BITS(imm,4,0)); \
+    R(rd) = BITS(src1,31,31) ?  \
+    (SEXT(BITS(src1,31,0),32) >> BITS(imm,4,0) ) | (SEXT(1,1) << 32)  :  \
+    BITS(src1,31,0) >> BITS(imm,4,0)); \
                       \
   /* J type inst   */ \
                       \
