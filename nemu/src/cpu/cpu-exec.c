@@ -29,7 +29,17 @@ CPU_state cpu = {};
 uint64_t g_nr_guest_inst = 0;
 static uint64_t g_timer = 0; // unit: us
 static bool g_print_step = false;
+// define of ring buffer to store inst for trace!
+static char ItraceRingBuf[16][128] = {};
+static uint8_t ItraceIndex = 0;
+static void RingBufInit(){
+  memset(ItraceRingBuf,' ',16*128);
+}
 
+void TraceInit(){
+  RingBufInit();
+  // add more
+}
 
 void device_update();
 void UpdateWp();
@@ -53,6 +63,18 @@ static void exec_once(Decode *s, vaddr_t pc) {
   isa_exec_once(s);
   cpu.pc = s->dnpc;
 #ifdef CONFIG_ITRACE
+  #ifndef CONFIG_ISA_loongarch32r
+    void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
+  #endif
+  char *itrace = ItraceRingBuf[ItraceIndex];
+  // adding 4 blankspace
+  memset(itrace,' ',4);
+  itrace += 4;
+  // adding pc address
+  itrace += snprintf(itrace, sizeof(ItraceRingBuf[0]),
+   FMT_WORD ":  ", s->pc);
+  /*
+  */
   char *p = s->logbuf;
   // must be aware of the effect of snprintf
   // the return value of snprintf is not the number
@@ -64,6 +86,7 @@ static void exec_once(Decode *s, vaddr_t pc) {
   uint8_t *inst = (uint8_t *)&s->isa.inst.val;
   for (i = ilen - 1; i >= 0; i --) {
     p += snprintf(p, 4, " %02x", inst[i]);
+    itrace += snprintf(itrace,4," %02x",inst[i]);
   }
   int ilen_max = MUXDEF(CONFIG_ISA_x86, 8, 4);
   int space_len = ilen_max - ilen;
@@ -71,12 +94,16 @@ static void exec_once(Decode *s, vaddr_t pc) {
   space_len = space_len * 3 + 1;
   memset(p, ' ', space_len);
   p += space_len;
+  memset(itrace, ' ', space_len+2);
+  itrace += space_len+2;
 
 #ifndef CONFIG_ISA_loongarch32r
-  void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
   // disassembling the inst
   disassemble(p, s->logbuf + sizeof(s->logbuf) - p,
       MUXDEF(CONFIG_ISA_x86, s->snpc, s->pc), (uint8_t *)&s->isa.inst.val, ilen);
+  // adding disassembling info
+  disassemble(itrace,ItraceRingBuf[ItraceIndex] + sizeof(ItraceRingBuf[0]) - itrace,
+      MUXDEF(CONFIG_ISA_x86, s->snpc, s->pc), (uint8_t *)&s->isa.inst.val, s->snpc - s->pc);
 #else
   p[0] = '\0'; // the upstream llvm does not support loongarch32r
 #endif
@@ -90,8 +117,11 @@ static void execute(uint64_t n) {
     g_nr_guest_inst ++;
     trace_and_difftest(&s, cpu.pc);
     if (nemu_state.state != NEMU_RUNNING) break;
+
+    if(ItraceIndex == 15) ItraceIndex =0;
+    else ItraceIndex++;
+
     IFDEF(CONFIG_DEVICE, device_update());
-    
   }
 }
 
@@ -130,6 +160,18 @@ void cpu_exec(uint64_t n) {
     case NEMU_RUNNING: nemu_state.state = NEMU_STOP; break;
 
     case NEMU_END: case NEMU_ABORT:
+    // test for itrace!
+    #ifdef CONFIG_ITRACE
+        memcpy(ItraceRingBuf[ItraceIndex],"--->",4);
+        for(int i=0;i<16;i++){
+          if(ItraceIndex == i){
+            printf("\033[0;31m%s\033[0m\n",ItraceRingBuf[i]);
+            continue;
+          }
+          puts(ItraceRingBuf[i]); 
+        }
+    #endif
+    // test for itrace!
       Log("nemu: %s at pc = " FMT_WORD,
           (nemu_state.state == NEMU_ABORT ? ANSI_FMT("ABORT", ANSI_FG_RED) :
            (nemu_state.halt_ret == 0 ? ANSI_FMT("HIT GOOD TRAP", ANSI_FG_GREEN) :

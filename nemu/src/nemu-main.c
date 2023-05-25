@@ -22,6 +22,7 @@ int is_exit_status_bad();
 
 
 extern int64_t expr(char *e, bool *success);
+extern void TraceInit();
 
 int main(int argc, char *argv[]) {
   /* Initialize the monitor. */
@@ -95,6 +96,11 @@ int main(int argc, char *argv[]) {
 #undef exper_check
 #endif
 //
+
+  #ifdef CONFIG_ITRACE
+	// init trace 
+	//TraceInit();
+  #endif
 
   /* Start engine. */
   engine_start();
