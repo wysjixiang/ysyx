@@ -95,6 +95,7 @@ int sprintf(char *out, const char *fmt, ...) {
   return written;
 }
 
+// remember output n-1 characters, and lastly output '\0'
 int snprintf(char *out, size_t n, const char *fmt, ...) {
   panic("Not implemented");
 }
