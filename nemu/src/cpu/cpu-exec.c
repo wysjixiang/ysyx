@@ -30,7 +30,7 @@ uint64_t g_nr_guest_inst = 0;
 static uint64_t g_timer = 0; // unit: us
 static bool g_print_step = false;
 // define of ring buffer to store inst for trace!
-static char ItraceRingBuf[16][128] = {};
+static char ItraceRingBuf[16][128] = {0};
 static uint8_t ItraceIndex = 0;
 static void RingBufInit(){
   memset(ItraceRingBuf,' ',16*128);
