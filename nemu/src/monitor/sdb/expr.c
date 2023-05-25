@@ -64,7 +64,7 @@ static struct rule {
   {"&&", TK_LAND},        // logic and
   {"\\(",TK_LBRACKET},    // left bracket
   {"\\)",TK_RBRACKET},    // right bracket
-  {"0x[0-9a-zA-Z]+",TK_HEX},        // hex number
+  {"0x[0-9a-fA-F]+",TK_HEX},        // hex number
   {"\\$[a-zA-Z0-9]+",TK_REG},   // register 
   {"[0-9]+",TK_NUM},        // number
 
@@ -146,12 +146,12 @@ static bool make_token(char *e) {
 						result = 0;
 						j = 2;
 						while(j < substr_len){
-							if(e[position + j] >= '9' || e[position + j] <= '9'){
+							if(e[position + j] >= '0' && e[position + j] <= '9'){
 								result = result * 16 + e[position + j] - '0';
-							}	else if(e[position + j] >= 'A' || e[position + j] <= 'F'){
-								result = result * 16 + e[position + j] - 55 ;
+							}	else if(e[position + j] >= 'A' && e[position + j] <= 'F'){
+								result = result * 16 + e[position + j] - 'A' + 10 ;
 							}	else{
-								result = result * 16 + e[position + j] - 87 ;
+								result = result * 16 + e[position + j] - 'a' + 10;
 							}
 							j++;
 						}
