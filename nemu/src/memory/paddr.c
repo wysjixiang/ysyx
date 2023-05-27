@@ -18,6 +18,9 @@
 #include <device/mmio.h>
 #include <isa.h>
 
+// extern
+bool CheckNotInstRange(uint64_t addr);
+
 #if   defined(CONFIG_PMEM_MALLOC)
 static uint8_t *pmem = NULL;
 #else // CONFIG_PMEM_GARRAY
@@ -64,7 +67,10 @@ void init_mem() {
 
 word_t paddr_read(paddr_t addr, int len) {
   #ifdef CONFIG_MTRACE
-    printf("Mtrace log: \033[0;32m\033[4mRead\033[0m \033[0;32m\033[4mMem:0x%08x\033[0m  len:%d\n",addr,len);
+    // if is a inst_fetch command, no need to trace this since we have itrace!
+    if(CheckNotInstRange(addr)){
+      printf("Mtrace log: \033[0;32m\033[4mRead\033[0m \033[0;32m\033[4mMem:0x%08x\033[0m  len:%d\n",addr,len);
+    }
   #endif
   if (likely(in_pmem(addr))) return pmem_read(addr, len);
   IFDEF(CONFIG_DEVICE, return mmio_read(addr, len));
@@ -74,7 +80,7 @@ word_t paddr_read(paddr_t addr, int len) {
 
 void paddr_write(paddr_t addr, int len, word_t data) {
   #ifdef CONFIG_MTRACE
-    printf("Mtrace log: \033[0;35m\033[4mRead\033[0m \033[0;35m\033[4mMem:0x%08x\033[0m  len:%d  data:%lu\n",addr,len,data);
+    printf("Mtrace log: \033[0;35m\033[4mWrite\033[0m \033[0;35m\033[4mMem:0x%08x\033[0m  len:%d  data:%lu\n",addr,len,data);
   #endif
   if (likely(in_pmem(addr))) { pmem_write(addr, len, data); return; }
   IFDEF(CONFIG_DEVICE, mmio_write(addr, len, data); return);

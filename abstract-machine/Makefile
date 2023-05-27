@@ -6,7 +6,7 @@ html:
 .PHONY: html
 
 ## 1. Basic Setup and Checks
-NEMUFLAGS += -b
+
 
 ### Default to create a bare-metal kernel image
 ifeq ($(MAKECMDGOALS),)
