@@ -421,7 +421,7 @@ void FuncCallRet(int rd,int rs1, uint64_t addr, char type){
 		int cnt =0;
 		if(type == 'I'){
 			if(1 == rd){
-				// jalr call
+				// jalr call with return address saved!
 				for(int i=0;i<tracevar.fun_num;i++){
 					if( addr == tracevar.func[i].p_start){
 						while( cnt++ < func_blank){
@@ -442,8 +442,17 @@ void FuncCallRet(int rd,int rs1, uint64_t addr, char type){
 						printf("ret back to[%s], explicit addr:0x%lx\n",tracevar.func[i].name,addr);
 					}
 				}
-			} else if(0 == rd && 0 == rs1){
-				printf("Junp!\n");
+			} else if(0 == rd && 0 != rs1){
+				// jalr call without return address saved!
+				for(int i=0;i<tracevar.fun_num;i++){
+					if( addr == tracevar.func[i].p_start){
+						while( cnt++ < func_blank){
+							putchar(' ');
+						}
+						printf("call [%s @ 0x%lx]\n",tracevar.func[i].name,tracevar.func[i].p_start);
+						func_blank +=2;
+					}
+				}
 			}else{
 				printf("I type FuncCall parse failed!\n");
 				printf("rd = %d, rs1 = %d, addr = %lx\n",rd,rs1,addr);
