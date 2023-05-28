@@ -57,6 +57,11 @@ int ParseElf(int argc, char* ElfFile);
 int FuncTableInit(symbol *sym, symbol* strtab,TraceVar *_tracevar);
 bool CheckNotInstRange(uint64_t addr);
 
+void FuncCallRet(int rd,int rs1, uint64_t addr, char type);
+#ifdef CONFIG_FTRACE
+	int static func_blank = 0;
+#endif
+
 // adding func for ftrace
 
 static void welcome() {
@@ -409,4 +414,63 @@ bool CheckNotInstRange(uint64_t addr){
 		return 0;
 	}
 	return 1;
+}
+
+void FuncCallRet(int rd,int rs1, uint64_t addr, char type){
+	#ifdef CONFIG_FTRACE
+		int cnt =0;
+		if(type == 'I'){
+			if(1 == rd){
+				// jalr call
+				for(int i=0;i<tracevar.fun_num;i++){
+					if( addr == tracevar.func[i].p_start){
+						while( cnt++ < func_blank){
+							putchar(' ');
+						}
+						printf("call [%s @ 0x%lx]\n",tracevar.func[i].name,tracevar.func[i].p_start);
+						func_blank +=2;
+					}
+				}
+			} else if(0 == rd && 1 == rs1){
+				// ret
+				for(int i=0;i<tracevar.fun_num;i++){
+					if( addr >= tracevar.func[i].p_start && addr < tracevar.func[i].p_end){
+						func_blank -=2;
+						while( cnt++ < func_blank){
+							putchar(' ');
+						}
+						printf("ret back to[%s], explicit addr:0x%lx\n",tracevar.func[i].name,addr);
+					}
+				}
+			} else if(0 == rd && 0 == rs1){
+				printf("Junp!\n");
+			}else{
+				printf("I type FuncCall parse failed!\n");
+				printf("rd = %d, rs1 = %d, addr = %lx\n",rd,rs1,addr);
+			}
+		} else if(type == 'J'){
+			if(1 == rd){
+				// jal call
+				for(int i=0;i<tracevar.fun_num;i++){
+					if( addr == tracevar.func[i].p_start){
+						while( cnt++ < func_blank){
+							putchar(' ');
+						}
+						printf("call [%s @ 0x%lx]\n",tracevar.func[i].name,tracevar.func[i].p_start);
+						func_blank +=2;
+					}
+				}
+			} else if(0 == rd){
+				// jump inst
+				printf("Jump call\n");
+			} else{
+				printf(" J type FuncCall parse failed!\n");
+				printf("rd = %d, rs1 = %d, addr = %lx\n",rd,rs1,addr);
+			}
+		} else{
+			printf("Type wrong!\n");
+		}
+	#else
+		;
+	#endif
 }

@@ -22,6 +22,9 @@
 #define Mr vaddr_read
 #define Mw vaddr_write
 
+// extern func call or ret func from monitor.c
+void FuncCallRet(int rd,int rs1, uint64_t addr, char type);
+
 enum {
   TYPE_I, TYPE_U, TYPE_S,
   TYPE_N, TYPE_J, TYPE_R,
@@ -85,7 +88,7 @@ static void decode_operand(Decode *s, int *rd, word_t *src1, word_t *src2, word_
   INSTPAT("??????? ????? ????? 011 ????? 00100 11", sltiu  , I, \
     R(rd) = src1 < imm ? 1:0 ); \
   INSTPAT("??????? ????? ????? 000 ????? 11001 11", jalr   , I, R(rd) = s->snpc, \
-    s->dnpc = src1 + imm );\
+    s->dnpc = src1 + imm, FuncCallRet(rd,BITS(s->isa.inst.val, 19, 15), s->dnpc , 'I') );\
   INSTPAT("0000000 ????? ????? 001 ????? 00100 11", slli   , I,\
     R(rd) = src1 << BITS(imm,4,0) );\
   INSTPAT("0000000 ????? ????? 101 ????? 00100 11", srli   , I,\
@@ -132,7 +135,7 @@ static void decode_operand(Decode *s, int *rd, word_t *src1, word_t *src2, word_
   /* J type inst   */ \
                       \
   INSTPAT("??????? ????? ????? ??? ????? 11011 11", jal    , J, R(rd) = s->snpc , \
-   s->dnpc = (s->dnpc)-4 + (int64_t)imm );  \
+   s->dnpc = (s->dnpc)-4 + (int64_t)imm,FuncCallRet(rd,BITS(s->isa.inst.val,19,15), s->dnpc , 'J') );  \
                       \
 } while(0)
 #define INSTPAT_R() do { \
