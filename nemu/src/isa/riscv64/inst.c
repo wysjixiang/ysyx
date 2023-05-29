@@ -171,16 +171,24 @@ static void decode_operand(Decode *s, int *rd, word_t *src1, word_t *src2, word_
     BITS(src1,31,0) >> BITS(src2,4,0)); \
   INSTPAT("0000001 ????? ????? 000 ????? 01100 11", MUL    , R, \
     R(rd) = (src1 * src2) ); \
+  INSTPAT("0000001 ????? ????? 001 ????? 01100 11", MULH    , R, \
+    R(rd) = (src1 * src2) ); \
+  INSTPAT("0000001 ????? ????? 011 ????? 01100 11", MULHU    , R, \
+    R(rd) = (src1 * src2) ); \
+  INSTPAT("0000001 ????? ????? 010 ????? 01100 11", MULHSU    , R, \
+    R(rd) = (src1 * src2) ); \
   INSTPAT("0000001 ????? ????? 000 ????? 01110 11", MULW    , R, \
     R(rd) = SEXT(BITS((BITS(src1,31,0) * BITS(src2,31,0)),31,0),32) ); \
   INSTPAT("0000001 ????? ????? 100 ????? 01100 11", DIV    , R, \
+    R(rd) = ((int64_t)src1 / (int64_t)src2) ); \
+  INSTPAT("0000001 ????? ????? 101 ????? 01100 11", DIVU    , R, \
     R(rd) = (src1 / src2) ); \
   INSTPAT("0000001 ????? ????? 100 ????? 01110 11", DIVW    , R, \
-    R(rd) = SEXT(BITS((BITS(src1,31,0) / BITS(src2,31,0)),31,0),32) ); \
+    R(rd) = SEXT(BITS(((int32_t)BITS(src1,31,0) / (int32_t)BITS(src2,31,0)),31,0),32) ); \
   INSTPAT("0000001 ????? ????? 110 ????? 01100 11", REM    , R, \
-    R(rd) = (src1 % src2) ); \
+    R(rd) = ((int64_t)src1 % (int64_t)src2) ); \
   INSTPAT("0000001 ????? ????? 110 ????? 01110 11", REMW    , R, \
-    R(rd) = SEXT(BITS((BITS(src1,31,0) % BITS(src2,31,0)),31,0),32) ); \
+    R(rd) = SEXT(BITS(((int32_t)BITS(src1,31,0) % (int32_t)BITS(src2,31,0)),31,0),32) ); \
 } while(0)
 #define INSTPAT_B() do { \
   /* B type inst   */ \

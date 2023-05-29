@@ -12,10 +12,10 @@ LDFLAGS   += -T $(AM_HOME)/scripts/linker.ld \
              --defsym=_pmem_start=0x80000000 --defsym=_entry_offset=0x0
 LDFLAGS   += --gc-sections -e _start
 ## batch mode
-##NEMUFLAGS += -b
+NEMUFLAGS += -b
 ## passing elf file to main function
-NEMUFLAGS += -l $(shell dirname $(IMAGE).elf)/nemu-log.txt
-NEMUFLAGS += -f $(IMAGE).elf
+##NEMUFLAGS += -f $(IMAGE).elf
+##NEMUFLAGS += -l $(shell dirname $(IMAGE).elf)/nemu-log.txt
 
 CFLAGS += -DMAINARGS=\"$(mainargs)\"
 CFLAGS += -I$(AM_HOME)/am/src/platform/nemu/include

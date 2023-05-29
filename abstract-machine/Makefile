@@ -5,8 +5,10 @@ html:
 	cat Makefile | sed 's/^\([^#]\)/    \1/g' | markdown_py > Makefile.html
 .PHONY: html
 
-## 1. Basic Setup and Checks
+# setting ARCH
+ARCH ?= riscv64-nemu
 
+## 1. Basic Setup and Checks
 
 ### Default to create a bare-metal kernel image
 ifeq ($(MAKECMDGOALS),)
