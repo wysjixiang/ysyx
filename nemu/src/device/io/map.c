@@ -52,7 +52,14 @@ void init_map() {
   p_space = io_space;
 }
 
+// adding DTRACE for MMIO
 word_t map_read(paddr_t addr, int len, IOMap *map) {
+
+  // adding trace info
+  #ifdef CONFIG_DTRACE
+    printf("Read Device:%s, offset:%d, len:%d\n",map->name,addr-map->low,len);
+  #endif
+
   assert(len >= 1 && len <= 8);
   check_bound(map, addr);
   paddr_t offset = addr - map->low;
@@ -60,11 +67,23 @@ word_t map_read(paddr_t addr, int len, IOMap *map) {
   invoke_callback(map->callback, offset, len, false); // prepare data to read
   // read the device reg so it seems like we communicate with outer device from MMIO!!!
   word_t ret = host_read(map->space + offset, len);
+
+  // adding trace info
+  #ifdef CONFIG_DTRACE
+    printf("Data:%lu\n",ret);
+  #endif
+
   return ret;
 }
 
 void map_write(paddr_t addr, int len, word_t data, IOMap *map) {
   assert(len >= 1 && len <= 8);
+  // adding trace info
+  #ifdef CONFIG_DTRACE
+    if(0 != strcmp("serial",map->name)){
+      printf("Write Device:%s, offset:%x, len:%d, data:%lu\n",map->name,addr-map->low,len,data);
+    }
+  #endif
   check_bound(map, addr);
   paddr_t offset = addr - map->low;
   host_write(map->space + offset, len, data);
