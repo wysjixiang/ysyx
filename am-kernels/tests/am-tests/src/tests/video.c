@@ -1,7 +1,8 @@
 #include <amtest.h>
 
-#define FPS 30
+#define FPS 60
 #define N   32
+//#define N   32
 
 static inline uint32_t pixel(uint8_t r, uint8_t g, uint8_t b) {
   return (r << 16) | (g << 8) | b;
@@ -13,7 +14,7 @@ static inline uint8_t B(uint32_t p) { return p; }
 static uint32_t canvas[N][N];
 static int used[N][N];
 
-static uint32_t color_buf[32 * 32];
+static uint32_t color_buf[N * N];
 
 void redraw() {
   int w = io_read(AM_GPU_CONFIG).width / N;
