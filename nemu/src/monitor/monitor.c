@@ -471,7 +471,7 @@ void FuncCallRet(int rd,int rs1, uint64_t addr, char type){
 				}
 			} else if(0 == rd){
 				// jump inst
-				printf("Jump call\n");
+				//printf("Jump call\n");
 			} else{
 				printf(" J type FuncCall parse failed!\n");
 				printf("rd = %d, rs1 = %d, addr = %lx\n",rd,rs1,addr);

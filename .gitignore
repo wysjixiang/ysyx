@@ -13,3 +13,5 @@
 /fceux-am
 #!/nvboard/*
 !/am-kernels
+!*.docx
+!*.doc

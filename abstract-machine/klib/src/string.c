@@ -100,7 +100,20 @@ void *memset(void *s, int c, size_t n) {
 }
 
 void *memmove(void *dst, const void *src, size_t n) {
-  panic("Not implemented");
+  
+  if (dst < src) {
+    while (n--) {
+      *(uint8_t *)dst++ = *(uint8_t *)src++;
+    }
+  } else if (dst > src) {
+    dst += n;
+    src += n;
+    while (n--) {
+      *(uint8_t *)--dst = *(uint8_t *)--src;
+    }
+  }
+
+  return dst;
 }
 
 void *memcpy(void *out, const void *in, size_t n) {

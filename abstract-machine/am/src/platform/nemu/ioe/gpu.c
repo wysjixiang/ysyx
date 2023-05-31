@@ -8,14 +8,10 @@ static uint32_t w = 0;
 static uint32_t h = 0;
 
 void __am_gpu_init() {
-  int i;
   int width_height = inl(VGACTL_ADDR);
   w = width_height >> 16;
   h = width_height & 0xFFFF;
   printf("GPU init! Width = %d, height = %d\n",w,h);
-  uint32_t *fb = (uint32_t *)(uintptr_t)FB_ADDR;
-  for (i = 0; i < w * h; i ++) fb[i] = i;
-  outl(SYNC_ADDR, 1);
 }
 
 void __am_gpu_config(AM_GPU_CONFIG_T *cfg) {
@@ -26,11 +22,6 @@ void __am_gpu_config(AM_GPU_CONFIG_T *cfg) {
     .width = width_height >> 16, .height = width_height & 0xFFFF,
     .vmemsz = (width_height >> 16) * (width_height & 0xFFFF) *4
   };
-//  *cfg = (AM_GPU_CONFIG_T) {
-//    .present = true, .has_accel = false,
-//    .width = 0, .height = 0,
-//    .vmemsz = 0
-//  };
 }
 
 void __am_gpu_fbdraw(AM_GPU_FBDRAW_T *ctl) {

@@ -80,7 +80,7 @@ void map_write(paddr_t addr, int len, word_t data, IOMap *map) {
   assert(len >= 1 && len <= 8);
   // adding trace info
   #ifdef CONFIG_DTRACE
-    if(0 != strcmp("serial",map->name)){
+    if(0 != strcmp("serial",map->name) && 0 != strcmp("audio-sbuf",map->name)&& 0 != strcmp("vmem",map->name)){
       printf("Write Device:%s, offset:%x, len:%d, data:%lu\n",map->name,addr-map->low,len,data);
     }
   #endif

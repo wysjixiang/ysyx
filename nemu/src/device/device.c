@@ -43,7 +43,7 @@ void device_update() {
 
   IFDEF(CONFIG_HAS_VGA, vga_update_screen());
 
-#ifndef CONFIG_TARGET_AM
+#ifndef CONFIG_TARGET_Ainit_screenM
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
     switch (event.type) {

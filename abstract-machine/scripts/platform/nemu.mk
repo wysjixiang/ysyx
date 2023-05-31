@@ -14,7 +14,7 @@ LDFLAGS   += --gc-sections -e _start
 ## batch mode
 NEMUFLAGS += -b
 ## passing elf file to main function
-##NEMUFLAGS += -f $(IMAGE).elf
+NEMUFLAGS += -f $(IMAGE).elf
 ##NEMUFLAGS += -l $(shell dirname $(IMAGE).elf)/nemu-log.txt
 
 CFLAGS += -DMAINARGS=\"$(mainargs)\"
