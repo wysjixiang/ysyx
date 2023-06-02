@@ -66,7 +66,7 @@ assign ledr[12] = full;
 assign ledr[11] = overflow;
 
 assign ledr[7] = ~btnr;
-assign ledr[9] = light;
+//assign ledr[9] = light;
 
 // clk has no driver???? always 0
 // finally found: we drive clk in main.cpp!!!

@@ -1,7 +1,7 @@
 
 TOPNAME := top
 NXDC_FILES = constr/top.nxdc
-INC_PATH ?=
+#INC_PATH := $(NPC_HOME)/module-lib 
 
 VSRC_FILE := module-lib
 

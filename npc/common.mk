@@ -36,6 +36,7 @@ LDFLAGS += -lSDL2 -lSDL2_image
 $(BIN): $(VSRCS) $(CSRCS) $(NVBOARD_ARCHIVE)
 	@rm -rf $(OBJ_DIR)
 	$(VERILATOR) $(VERILATOR_CFLAGS) \
+	-I$(NPC_HOME)/module-lib \
 	--top-module $(TOPNAME) $^ \
 	$(addprefix -CFLAGS , $(CFLAGS)) $(addprefix -LDFLAGS , $(LDFLAGS)) \
 	--Mdir $(OBJ_DIR) --exe -o $(abspath $(BIN))
@@ -53,7 +54,7 @@ clean:
 
 
 .PHONY:	wave
-wave:	waveform.vcd
+wave:	run waveform.vcd 
 	@echo "------ Open GTKwaveform ---------"
 	gtkwave	waveform.vcd
 
