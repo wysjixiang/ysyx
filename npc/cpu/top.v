@@ -17,12 +17,25 @@ localparam REG_NUM = 32;
 wire [WIDTH-1:0] pc_o;
 
 
+// Controller
+wire branch_jump_en_2con;
+wire [WIDTH-1:0] branch_jump_addr_2con;
+wire hold_pipeline_en_2con;
+// Controller to seperate modules
+wire branch_jump_en_2module;
+wire [WIDTH-1:0] branch_jump_addr_2module;
+wire hold_pipeline_en_2module;
+
+
+
 ysyx_22051468_Pc #(
     .ResetValue(`PC_RESETVALUE)
 )   PC0(
-    .clk    (clk),
-    .rst_n  (rst_n),
-    .pc_o   (pc_o)
+    .clk        (clk),
+    .rst_n      (rst_n),
+    .jump_en    (branch_jump_en_2module),
+    .jump_addr  (branch_jump_addr_2module),
+    .pc_o       (pc_o)
 );
 
 
@@ -33,6 +46,7 @@ ysyx_22051468_Ifetch_Dff #(
     .rst_n(rst_n),
     .inst_i(inst_rom),
     .inst_i_addr(pc_o),
+    .hold_pipeline      (hold_pipeline_en_2module),
     .addr_2rom(inst_addr2rom),
     .inst_o(inst_fromIfetch),
     .inst_o_addr(inst_addr_fromIfetch)
@@ -204,6 +218,7 @@ ysyx_22051468_InstDecode_Dff #(
     .is_rem_i            (is_rem_2decdff),
     // define the explicit_type with one hot coding
     .explicit_type_i    (explicit_type_2decdff),
+    .hold_pipeline      (hold_pipeline_en_2module),
 
     // to exec
     .rs1_data_o(rs1_data_2_exec),
@@ -237,7 +252,11 @@ ysyx_22051468_InstDecode_Dff #(
 );
 
 
-// to exec
+// Controller
+wire branch_jump_en;
+wire [WIDTH-1:0] branch_jump_addr_o;
+wire hold_pipeline_en;
+
 ysyx_22051468_Exec #(
     .WIDTH(WIDTH)
 )   Exec0(
@@ -277,9 +296,26 @@ ysyx_22051468_Exec #(
     // write back
     .w_addr_o(rd_waddr),
     .w_data_o(rd_wdata),
-    .w_addr_en     (wen)
+    .w_addr_en     (wen),
+// Controller
+    .branch_jump_en         (branch_jump_en_2con    ),
+    .branch_jump_addr_o     (branch_jump_addr_2con),
+    .hold_pipeline_en       (hold_pipeline_en_2con  )
 
 );
+
+
+ysyx_22051468_Control #(
+    .WIDTH(64)
+)   Contoller0(
+    .jump_en_i           (branch_jump_en_2con  ),
+    .jump_addr_i         (branch_jump_addr_2con),
+    .hold_pipeline_i     (hold_pipeline_en_2con),
+    .jump_en_o           (branch_jump_en_2module  ),
+    .jump_addr_o         (branch_jump_addr_2module),
+    .hold_pipeline_o     (hold_pipeline_en_2module)
+);
+
 
 
 

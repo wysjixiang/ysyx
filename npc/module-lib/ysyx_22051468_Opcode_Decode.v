@@ -24,6 +24,10 @@ wire [`EXPLICIT_TYPE_NUM-1:0] explicit_code_R_GenAlu;
 wire [`EXPLICIT_TYPE_NUM-1:0] explicit_code_I_W_GenAlu;
 wire [`EXPLICIT_TYPE_NUM-1:0] explicit_code_R_W_GenAlu;
 // add more
+wire [`EXPLICIT_TYPE_NUM-1:0] explicit_code_B_GenAlu;
+
+
+
 
 // decode info
 assign is_load = op_i == `INST_I_LOAD;
@@ -41,17 +45,25 @@ assign is_mul = 0;
 assign is_div = 0;
 assign is_rem = 0;
 
+// is_U
+assign is_U = 
+    (op_i == `INST_B_ && (funct3 == 3'b110 || funct3 == 3'b111)) 
+    // add more
 
+    ;
 
 // explicit type
 assign explicit_type_o = 
     explicit_code_I_GenAlu |
-    explicit_code_R_GenAlu
+    explicit_code_R_GenAlu |
+    explicit_code_B_GenAlu
     ;
 
 // The one hot coding is in accordance with that
 // in INST_TYPE.v
-assign explicit_code_I_GenAlu[0] = (op_i == `INST_I_ && funct3 == 3'b000);
+
+// add command compatible with auipc
+assign explicit_code_I_GenAlu[0] = (op_i == `INST_I_ && funct3 == 3'b000) | (op_i == `INST_U_AUIPC);
 assign explicit_code_I_GenAlu[1] = (op_i == `INST_I_ && funct3 == 3'b111);
 assign explicit_code_I_GenAlu[2] = 0;
 assign explicit_code_I_GenAlu[3] = (op_i == `INST_I_ && funct3 == 3'b110);
@@ -73,6 +85,14 @@ assign explicit_code_R_GenAlu[8] = (op_i == `INST_R_ && funct3 == 3'b101 && func
 
 
 // add more
+assign explicit_code_B_GenAlu[0] = (op_i == `INST_B_ && funct3 == 3'b000);
+assign explicit_code_B_GenAlu[1] = (op_i == `INST_B_ && funct3 == 3'b001);
+assign explicit_code_B_GenAlu[2] = (op_i == `INST_B_ && funct3 == 3'b100);
+assign explicit_code_B_GenAlu[3] = (op_i == `INST_B_ && funct3 == 3'b101);
+assign explicit_code_B_GenAlu[4] = 1'b0;
+assign explicit_code_B_GenAlu[5] = 1'b0;
+assign explicit_code_B_GenAlu[6] = 1'b0;
+assign explicit_code_B_GenAlu[7] = 1'b0;
 
 
 

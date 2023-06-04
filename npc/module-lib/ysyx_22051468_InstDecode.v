@@ -101,6 +101,16 @@ assign immU = {
     1'b0
 };
 
+assign immJ = {
+    {(WIDTH-21){inst_i[31]}},
+    inst_i[31],
+    inst_i[19:12],
+    inst_i[20],
+    inst_i[30:21],
+    1'b0
+};
+
+
 // assign imm related
 assign imm_o = 
     ({WIDTH{imm_i_sel}} & immI) |

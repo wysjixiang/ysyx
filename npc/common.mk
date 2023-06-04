@@ -50,14 +50,16 @@ clean:
 	rm -rf $(BUILD_DIR) $(wildcard *.vcd)
 
 
-.PHONY: run clean
+.PHONY: run clean wave
 
 
 .PHONY:	wave
-wave:	run waveform.vcd 
+wave:	run 
 	@echo "------ Open GTKwaveform ---------"
 	gtkwave	waveform.vcd
 
 
-include ../../Makefile
+
+
+#include ../$(abspath $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))))/Makefile
 # include for tracer-ysyx

@@ -1,7 +1,7 @@
 .PHONY: all run gdb clean latest $(ALL)
 
 # adding default ARCH
-ARCH ?=riscv64-nemu
+ARCH ?=riscv64-npc
 
 RESULT = .result
 $(shell > $(RESULT))
@@ -16,6 +16,30 @@ all: $(addprefix Makefile., $(ALL))
 	@echo "" $(ALL)
 
 $(ALL): %: Makefile.%
+
+
+# npc
+ifeq ($(ARCH),riscv64-npc)
+Makefile.%: tests/%.c latest
+	@/bin/echo -e "NAME = $*\nSRCS = $<\ninclude $${NPC_HOME}/cpu/Makefile" > $@
+	@if make -s -f $@ ARCH=$(ARCH) $(MAKECMDGOALS); then \
+		printf "[%14s] $(COLOR_GREEN)PASS!$(COLOR_NONE)\n" $* >> $(RESULT); \
+	else \
+		printf "[%14s] $(COLOR_RED)FAIL!$(COLOR_NONE)\n" $* >> $(RESULT); \
+	fi
+	-@rm -f Makefile.$*
+
+run: all
+	@cat $(RESULT)
+	@rm $(RESULT)
+
+clean:
+	rm -rf Makefile.* build/
+
+latest:
+
+else
+# am
 
 Makefile.%: tests/%.c latest
 	@/bin/echo -e "NAME = $*\nSRCS = $<\nLIBS += klib\ninclude $${AM_HOME}/Makefile" > $@
@@ -36,3 +60,4 @@ clean:
 	rm -rf Makefile.* build/
 
 latest:
+endif

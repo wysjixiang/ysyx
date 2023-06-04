@@ -12,7 +12,7 @@ module ysyx_22051468_Dff #(
 );
 
 always@(posedge clk) begin
-    if(!rst_n)
+    if(!rst_n | !wen)
         out <= ResetValue;
     else if(wen)
         out <= in;
