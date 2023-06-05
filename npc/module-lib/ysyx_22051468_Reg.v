@@ -31,6 +31,9 @@ wire write_en;
 assign write_en = (rd_waddr_i == 0) ? 0 : wen;
 
 
+import "DPI-C" function void set_gpr_ptr(input logic [63:0] a []);
+initial set_gpr_ptr(gpr);  // rf为通用寄存器的二维数组变量
+
 
 // in case of data collidation
 always @(posedge clk) begin

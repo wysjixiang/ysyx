@@ -14,7 +14,7 @@ default:
 
 $(shell mkdir -p $(BUILD_DIR))
 
-SRC_AUTO_BIND := $(abspath $(BUILD_DIR)/auto_bind.cpp)
+SRC_AUTO_BIND = $(abspath $(BUILD_DIR)/auto_bind.cpp)
 
 $(SRC_AUTO_BIND): $(NXDC_FILES)
 	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
@@ -30,10 +30,17 @@ INCFLAGS = $(addprefix -I, $(INC_PATH))
 CFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
 # -D<Var>[=<value>] : Set preprocessor define
 LDFLAGS += -lSDL2 -lSDL2_image
+# add readline lib for read input and parse
+LDFLAGS += -lreadline 
 # -LDFLAGS : linker pre-object arguments for makefile 
 
+# add llvm
+LDFLAGS += $(shell llvm-config --cxxflags) -fPIE
+LDFLAGS += $(shell llvm-config --libs) 
 
-$(BIN): $(VSRCS) $(CSRCS) $(NVBOARD_ARCHIVE)
+
+
+$(BIN): $(VSRCS) $(CSRCS) $(NVBOARD_ARCHIVE) 
 	@rm -rf $(OBJ_DIR)
 	$(VERILATOR) $(VERILATOR_CFLAGS) \
 	-I$(NPC_HOME)/module-lib \
@@ -42,11 +49,14 @@ $(BIN): $(VSRCS) $(CSRCS) $(NVBOARD_ARCHIVE)
 	--Mdir $(OBJ_DIR) --exe -o $(abspath $(BIN))
 	$(call git_commit, "Run bin file") # DO NOT REMOVE THIS LINE!!!
 
+IMG ?=
+
+NPC_EXEC := $(BIN) $(IMG)
 
 run: $(BIN)
-	@$^
+	$(NPC_EXEC)
 
-clean:
+clean: 
 	rm -rf $(BUILD_DIR) $(wildcard *.vcd)
 
 
@@ -60,6 +70,6 @@ wave:	run
 
 
 
+include $(NEMU_HOME)/../Makefile
 
-#include ../$(abspath $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))))/Makefile
 # include for tracer-ysyx

@@ -6,7 +6,7 @@ html:
 .PHONY: html
 
 # setting ARCH
-ARCH ?= riscv64-nemu
+ARCH ?= riscv64-npc
 
 ## 1. Basic Setup and Checks
 

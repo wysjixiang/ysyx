@@ -10,36 +10,12 @@ COLOR_RED   = \033[1;31m
 COLOR_GREEN = \033[1;32m
 COLOR_NONE  = \033[0m
 
-ALL = $(basename $(notdir $(shell find tests/. -name "*.c")))
+ALL ?= $(basename $(notdir $(shell find tests/. -name "*.c")))
 
 all: $(addprefix Makefile., $(ALL))
 	@echo "" $(ALL)
 
 $(ALL): %: Makefile.%
-
-
-# npc
-ifeq ($(ARCH),riscv64-npc)
-Makefile.%: tests/%.c latest
-	@/bin/echo -e "NAME = $*\nSRCS = $<\ninclude $${NPC_HOME}/cpu/Makefile" > $@
-	@if make -s -f $@ ARCH=$(ARCH) $(MAKECMDGOALS); then \
-		printf "[%14s] $(COLOR_GREEN)PASS!$(COLOR_NONE)\n" $* >> $(RESULT); \
-	else \
-		printf "[%14s] $(COLOR_RED)FAIL!$(COLOR_NONE)\n" $* >> $(RESULT); \
-	fi
-	-@rm -f Makefile.$*
-
-run: all
-	@cat $(RESULT)
-	@rm $(RESULT)
-
-clean:
-	rm -rf Makefile.* build/
-
-latest:
-
-else
-# am
 
 Makefile.%: tests/%.c latest
 	@/bin/echo -e "NAME = $*\nSRCS = $<\nLIBS += klib\ninclude $${AM_HOME}/Makefile" > $@
@@ -56,8 +32,12 @@ run: all
 
 gdb: all
 
+ifeq ($(ARCH), riscv64-npc)
+clean:
+	rm -rf Makefile.* build/ $(NPC_HOME)/cpu/build/
+else
 clean:
 	rm -rf Makefile.* build/
+endif
 
 latest:
-endif

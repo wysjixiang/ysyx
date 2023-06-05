@@ -2,6 +2,10 @@
 // This DPI function will read "din"
 import "DPI-C" context function void dpi_that_accesses_din(input din);
 
+// This DPI function will read inst and pc
+import "DPI-C" context function void get_pc (input logic [31:0] a);
+import "DPI-C" context function void get_inst (input logic [31:0] a);
+
 `include "INST_TYPE.v"
 
 
@@ -56,14 +60,11 @@ module ysyx_22051468_Exec #(
 // DPI-C communication 
 wire is_ebreak;
 assign is_ebreak = 32'h00100073 == inst_i;
-always @(*)
-   dpi_that_accesses_din(is_ebreak);
-
-//task dpi_din_args(input din);
-//   /* verilator no_inline_task */
-//   dpi_that_accesses_din();
-//endtask
-
+always @(*) begin
+    dpi_that_accesses_din(is_ebreak);
+    get_pc(pc[31:0]);
+    get_inst(inst_i);
+end
 
 // program counter
 wire [WIDTH-1:0] pc;
