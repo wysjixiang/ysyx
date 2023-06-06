@@ -38,6 +38,9 @@ LDFLAGS += -lreadline
 LDFLAGS += $(shell llvm-config --cxxflags) -fPIE
 LDFLAGS += $(shell llvm-config --libs) 
 
+#add REF_SO
+LDFLAGS += -I$(NEMU_HOME)/build
+LDFLAGS += $(NEMU_HOME)/build/riscv64-nemu-interpreter-so
 
 
 $(BIN): $(VSRCS) $(CSRCS) $(NVBOARD_ARCHIVE) 

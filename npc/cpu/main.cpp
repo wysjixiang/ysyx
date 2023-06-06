@@ -8,6 +8,10 @@
 #define MAX_SIM_TIME 3000
 #define Base_ROM_Addr 0x80000000
 
+// DIFF_TEST
+#define DIFF_TEST
+#undef DIFF_TEST
+
 static TOP_NAME* dut = new TOP_NAME;
 static VerilatedVcdC *m_trace = new VerilatedVcdC;
 void nvboard_bind_all_pins(Vtop *top);
@@ -22,6 +26,7 @@ int parse_args(int argc, char *argv[]);
 long load_img(uint32_t *inst);
 int ReadBinFile(int argc, char **argv,uint32_t *inst);
 void itrace();
+int diffverify();
 
 // export
 void cpu_exec(int n);
@@ -37,8 +42,8 @@ uint32_t inst[2000] = {0};
 
 
 int main(int argc, char *argv[]){
-
-	ReadBinFile(argc,argv,inst);
+	long img_size = 0;
+	img_size = ReadBinFile(argc,argv,inst);
 	// init llvm-asm lib
 	init_disasm("riscv64-pc-linux-gnu");
 
@@ -66,15 +71,21 @@ static void port_update(){
 
 static void single_cycle() {
 	dut->clk = 0; dut->eval(); m_trace->dump(sim_time++);
-	dut->clk = 1; 
-	// in/out port update when clk is high, but before update
+	// in/out port update when clk is low. this means it will only record what has been done!
 	itrace();
 	port_update();
+	#ifdef DIFF_TEST
+		if(diffverify() < 0){
+			printf("Difftest failed!\n");
+			assert(0);
+		}
+	#endif
+	dut->clk = 1; 
 	dut->eval(); 
 	m_trace->dump(sim_time++);
 }
 
-void first_reset(){
+static void first_reset(){
 	dut->rst_n = 0;
 	dut->clk = 0; dut->eval(); m_trace->dump(sim_time++);
 	dut->clk = 1; dut->eval(); m_trace->dump(sim_time++);
@@ -99,4 +110,5 @@ void cpu_exec(int n){
 		single_cycle();
 	}
 }
+
 

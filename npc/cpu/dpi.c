@@ -32,6 +32,9 @@ void gpr_display() {
   }
 }
 
+uint64_t* get_gpr_ptr(){
+	return cpu_gpr;
+}
 
 // DPI-C: read mem
 

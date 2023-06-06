@@ -18,16 +18,60 @@
 #include <difftest-def.h>
 #include <memory/paddr.h>
 
+// `direction`为`DIFFTEST_TO_DUT`时, 获取REF的寄存器状态到`dut`;
+// `direction`为`DIFFTEST_TO_REF`时, 设置REF的寄存器状态为`dut`;
+//#define DIFFTEST_TO_DUT 0
+//#define DIFFTEST_TO_REF 1
+
+
 __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction) {
-  assert(0);
+
+  int div = n/4;
+  int rem = n%4;
+  uint32_t *data_4 = buf;
+
+  if(direction == DIFFTEST_TO_REF){
+    for(int i=0;i<div;i++){
+      paddr_write(addr,4,*data_4);
+      addr +=4;
+      data_4++;
+    }
+    uint8_t *data_1 = (uint8_t *)data_4;
+    for(int i=0;i<rem;i++){
+      paddr_write(addr,1,*data_1);
+      addr++;
+      data_1++;
+    }
+  } else{
+    for(int i=0;i<div;i++){
+      *data_4 = paddr_read(addr,4);
+      addr +=4;
+      data_4++;
+    }
+    uint8_t *data_1 = (uint8_t *)data_4;
+    for(int i=0;i<div;i++){
+      *data_1 = paddr_read(addr,1);
+      addr++;
+      data_1++;
+    }
+  }
 }
 
 __EXPORT void difftest_regcpy(void *dut, bool direction) {
-  assert(0);
+  uint64_t *data = dut;
+  if(direction == DIFFTEST_TO_REF){
+    for(int i=0;i<32;i++){
+      cpu.gpr[i] = *data++;
+    }
+  } else{
+    for(int i=0;i<32;i++){
+      *data++ = cpu.gpr[i];
+    }
+  }
 }
 
 __EXPORT void difftest_exec(uint64_t n) {
-  assert(0);
+  cpu_exec(n);
 }
 
 __EXPORT void difftest_raise_intr(word_t NO) {
