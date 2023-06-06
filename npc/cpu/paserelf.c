@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <assert.h>
 
-
+void set_batch();
 
 static char *img_file = NULL;
 
@@ -22,6 +22,7 @@ int parse_args(int argc, char *argv[]) {
   // : means it needs args
   while ( (o = getopt_long(argc, argv, "-bhl:f:d:p:", table, NULL)) != -1) {
     switch (o) {
+      case 'b': set_batch();      break;
       case 1: img_file = optarg; return 0;	// set to 1 if unrecognize
       default:
         printf("Usage: %s [OPTION...] IMAGE [args]\n\n", argv[0]);

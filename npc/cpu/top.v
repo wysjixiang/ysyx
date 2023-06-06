@@ -260,6 +260,9 @@ wire hold_pipeline_en;
 ysyx_22051468_Exec #(
     .WIDTH(WIDTH)
 )   Exec0(
+//Display debug
+    .clk(clk),
+    .rst_n(rst_n),
 // input
     // from decdff
     .rs1_data_i        (rs1_data_2_exec),

@@ -47,8 +47,12 @@ static uint32_t pc = 0;
 static uint32_t inst = 0;
 
 
-void read_inst(uint64_t *this_pc, uint32_t *this_s){
+
+void read_pc(uint64_t *this_pc){
 	*this_pc = pc;
+}
+
+void read_inst(uint32_t *this_s){
 	*this_s = inst;
 }
 

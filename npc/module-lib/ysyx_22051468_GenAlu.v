@@ -31,8 +31,8 @@ assign t_no_cin = {WIDTH{need_sub}} ^ op_2;
 assign {carry,add_sub_result} = op_1 + t_no_cin + {{(WIDTH-1){1'b0}},need_sub};
 assign overflow = (op_1[WIDTH-1] == t_no_cin[WIDTH-1]) && (add_sub_result[WIDTH-1] != op_1[WIDTH-1] );
 assign slt_out =                                                                   
- (is_U_i & need_sub) ^ carry |                                                     
- (!is_U_i & need_sub) & (add_sub_result[WIDTH-1] ^ overflow); 
+ ((is_U_i & need_sub) ^ carry) |                                                     
+ ((!is_U_i & need_sub) & (add_sub_result[WIDTH-1] ^ overflow)); 
 
 // wire for result
 wire [WIDTH-1:0] add_out;
@@ -66,7 +66,7 @@ assign out_result =
 	{WIDTH{opcode[`OR ]}} & or_out |
 	{WIDTH{opcode[`XOR]}} & xor_out |
 	{WIDTH{(opcode[`SLL] | opcode[`SRL] | opcode[`SRA])}} &  shift_data	|
-	{WIDTH{opcode[`SLT] & slt_out}} 
+	{{WIDTH-1{1'b0}},opcode[`SLT] & slt_out} 
 	;
 
 

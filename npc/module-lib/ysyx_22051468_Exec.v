@@ -13,6 +13,11 @@ module ysyx_22051468_Exec #(
     WIDTH = 64
 )
 (
+
+//Display debug
+    input clk,
+    input rst_n,
+
 // input
     // from decdff
     input [WIDTH-1:0] rs1_data_i,
@@ -56,16 +61,6 @@ module ysyx_22051468_Exec #(
     output hold_pipeline_en
 );
 
-
-// DPI-C communication 
-wire is_ebreak;
-assign is_ebreak = 32'h00100073 == inst_i;
-always @(*) begin
-    dpi_that_accesses_din(is_ebreak);
-    get_pc(pc[31:0]);
-    get_inst(inst_i);
-end
-
 // program counter
 wire [WIDTH-1:0] pc;
 
@@ -91,7 +86,11 @@ wire [WIDTH-1:0] inst_I_data;
 
 
 // test!
-always@(*) begin
+wire test_sig;
+assign test_sig = ~clk & rst_n;
+always@(posedge test_sig) begin
+    $display("\n");
+    $display("Exec!\t");
     $display("PC = %x\t",pc);
     $display("branch_jump_en = %d\t branch_jump_addr = %x\t",branch_jump_en,branch_jump_addr_o);
     $display("inst = %x\t",inst_i);
@@ -105,8 +104,17 @@ always@(*) begin
     $display("op_1 = %x\t",GenAlu_op1);
     $display("op_2 = %x\t",GenAlu_op2);
     $display("GenAlu_out = %x\t",GenAlu_out);
-    $display("\t",);
 end
+
+// DPI-C communication 
+wire is_ebreak;
+assign is_ebreak = 32'h00100073 == inst_i;
+always @(*) begin
+    dpi_that_accesses_din(is_ebreak);
+    get_pc(pc[31:0]);
+    get_inst(inst_i);
+end
+
 
 // to controller
 assign branch_jump_en = 
@@ -125,7 +133,7 @@ assign branch_jump_addr_o =
 // assign 
 assign w_addr_en = rd_need_i;
 assign w_addr_o = rd_addr_i;
-assign w_data_o = 
+assign w_data_o =  
     ({WIDTH{(is_jal_i | is_jalr_i)}} & (pc + 4)) |
     ({WIDTH{GenAlu_ena & !is_jal_i & !is_jalr_i}} & GenAlu_out)  |
     ({WIDTH{(inst_type_i == `INST_U_LUI)}} & imm_i)

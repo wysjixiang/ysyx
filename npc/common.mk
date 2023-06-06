@@ -53,8 +53,10 @@ $(BIN): $(VSRCS) $(CSRCS) $(NVBOARD_ARCHIVE)
 	$(call git_commit, "Run bin file") # DO NOT REMOVE THIS LINE!!!
 
 IMG ?=
+ARGS ?=
 
-NPC_EXEC := $(BIN) $(IMG)
+
+NPC_EXEC := $(BIN) $(ARGS) $(IMG) 
 
 run: $(BIN)
 	$(NPC_EXEC)

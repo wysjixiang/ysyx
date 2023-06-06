@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-
+#include <stdbool.h>
 
 static int is_batch_mode = false;
 
@@ -182,4 +182,8 @@ int sdb_mainloop() {
     if (i == NR_CMD) { printf("Unknown command '%s'\n", cmd); }
   }
   return 0;
+}
+
+void set_batch(){
+  is_batch_mode = true;
 }
