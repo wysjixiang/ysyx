@@ -23,5 +23,6 @@ image: $(IMAGE).elf
 
 
 run: image
+	@echo $(NPCFLAGS)
 	$(MAKE) -C $(NPC_HOME)/cpu/ run ARGS="$(NPCFLAGS)" IMG=$(IMAGE).bin
 	#$(MAKE) -C $(NPC_HOME)/cpu/ run ARGS="$(IMAGE).bin" IMG=$(IMAGE).bin

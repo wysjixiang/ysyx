@@ -88,6 +88,10 @@ wire [WIDTH-1:0] BranchAlu_op2;
 wire BranchAlu_ena;
 wire branch_jump;
 
+// ComplexAlu module wire
+wire is_complex_alu;
+wire [WIDTH-1:0] ComAlu_out;
+
 // Result need to write to Rd
 wire [WIDTH-1:0] inst_I_data;
 
@@ -97,12 +101,14 @@ wire [WIDTH-1:0] load_data;
 // test!
 wire test_sig;
 assign test_sig = ~clk & rst_n;
+
+`undef debug
+`ifdef debug
 always@(posedge test_sig) begin
     $display("\n");
     $display("Exec!\t");
     $display("PC = %x\t",pc);
     $display("branch_jump_en = %d\t branch_jump_addr = %x\t",branch_jump_en,branch_jump_addr_o);
-    $display("inst = %x\t",inst_i);
     $display("write_en = %d\t",w_addr_en);
     $display("write_addr = %d\t",w_addr_o);
     $display("write_data = %x\t",w_data_o);
@@ -112,16 +118,24 @@ always@(posedge test_sig) begin
     $display("is_jalr = %d\t",is_jalr_i);
     $display("is_load = %d\t",is_load_i);
     $display("is_store = %d\t",is_store_i);
+    $display("is_mul = %d\t",is_mul);
+    $display("is_div = %d\t",is_div);
+    $display("is_div = %d\t",is_div);
+    $display("is_w = %d\t",is_W_i);
+    $display("is_u = %d\t",is_U_i);
     $display("opcode = %x\t",GenAlu_opcode);
-    $display("op_1 = %x\t",GenAlu_op1);
-    $display("op_2 = %x\t",GenAlu_op2);
+    $display("Complexop_1 = %x\t",rs1_data_i);
+    $display("Complexop_2 = %x\t",rs2_data_i);
+    $display("ComplexAlu_out = %x\t",ComAlu_out);
+    $display("Genop_1 = %x\t",GenAlu_op1);
+    $display("Genop_2 = %x\t",GenAlu_op2);
     $display("imm = %x\t",imm_i);
     $display("GenAlu_out = %x\t",GenAlu_out);
     $display("bran_op1 = %x\t", BranchAlu_op1);
     $display("bran_op2 = %x\t",BranchAlu_op2);
     $display("explicit_op = %x\t",explicit_type_i);
-
 end
+`endif
 
 // DPI-C communication 
 // ********************************//
@@ -185,6 +199,8 @@ assign branch_jump_addr_o =
 
 // write back to regs
 // assign 
+assign is_complex_alu = is_mul | is_div | is_rem;
+
 assign load_data = 
     ({WIDTH{(explicit_type_i[`LD])}} & rdata_process ) | 
     ({WIDTH{(explicit_type_i[`LW]) & is_U_i}} & {{(WIDTH/2){1'b0}},rdata_process[31:0]}) | 
@@ -201,13 +217,14 @@ assign w_data_o =
     ({WIDTH{(is_jal_i | is_jalr_i)}} & (pc + 4)) |
     ({WIDTH{GenAlu_ena & !is_jal_i & !is_jalr_i & !is_load_i}} & GenAlu_out)  |
     ({WIDTH{(inst_type_i == `INST_U_LUI)}} & imm_i)     |
-    ({WIDTH{(is_load_i)}} & load_data)     
+    ({WIDTH{(is_load_i)}} & load_data)  |
+    ({WIDTH{is_complex_alu}} & ComAlu_out)  
     // add more
     ;
 
 // GenAlu module assign
 assign GenAlu_ena = 
-    (!is_mul & !is_div & !is_rem)  & (
+    (!is_complex_alu)  & (
     (inst_type_i == `INST_U_AUIPC ) |
     (inst_type_i == `INST_I_ ) |
     (inst_type_i == `INST_I_W ) |
@@ -308,6 +325,18 @@ ysyx_22051468_BranchAlu	#(
     .is_U_i         (is_U_i),
 	.ena            (BranchAlu_ena ),
 	.branch_jump    (branch_jump)
+);
+
+
+ysyx_22051468_ComplexAlu_OneCycle #(
+    .WIDTH(64),
+	.ALU_OPCODE_WIDTH(`EXPLICIT_TYPE_NUM)
+)   ComplexAlu0(
+	.ComplexAlu_op1     (rs1_data_i),
+	.ComplexAlu_op2     (rs2_data_i),
+	.opcode             (explicit_type_i),
+    .is_W_i             (is_W_i),
+	.out_result         (ComAlu_out)
 );
 
 endmodule

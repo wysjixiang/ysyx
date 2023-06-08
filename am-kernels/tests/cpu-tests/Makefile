@@ -5,7 +5,7 @@ ARCH ?=riscv64-npc
 NEMUFLAGS += -b
 
 ifeq ($(ARCH),riscv64-npc)
-#NPCFLAGS := -b
+NPCFLAGS := -b
 ## passing elf file to main function
 #NEMUFLAGS += -f $(IMAGE).elf
 endif
@@ -24,9 +24,9 @@ all: $(addprefix Makefile., $(ALL))
 
 $(ALL): %: Makefile.%
 
+#modified a little bit here!
 Makefile.%: tests/%.c latest
-	#modified a little bit here!
-	@/bin/echo -e "NPCFLAGS += $(NPCFLAGS)\nNAME = $*\nSRCS = $<\nLIBS += klib\ninclude $${AM_HOME}/Makefile" > $@
+	@/bin/echo -e "NPCFLAGS += $(NPCFLAGS)\nNEMUFLAGS += $(NEMUFLAGS)\nNAME = $*\nSRCS = $<\nLIBS += klib\ninclude $${AM_HOME}/Makefile" > $@
 	@if make -s -f $@ ARCH=$(ARCH) $(MAKECMDGOALS); then \
 		printf "[%14s] $(COLOR_GREEN)PASS!$(COLOR_NONE)\n" $* >> $(RESULT); \
 	else \

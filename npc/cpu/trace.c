@@ -21,6 +21,8 @@ void itrace(){
     read_pc(&pc);
     read_inst(s_inst_buf);
     disassemble(&str[0],96,pc,s,4);
-    printf("Disasm Info:");
-    printf("PC:0x%lx, Hex_code:0x%08x,  inst:%s\n",pc, *s_inst_buf ,str);
+    #ifdef ASM_INFO
+        printf("Disasm Info:");
+        printf("PC:0x%lx, Hex_code:0x%08x,  inst:%s\n",pc, *s_inst_buf ,str);
+    #endif
 }

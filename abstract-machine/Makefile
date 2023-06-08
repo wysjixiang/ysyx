@@ -5,8 +5,6 @@ html:
 	cat Makefile | sed 's/^\([^#]\)/    \1/g' | markdown_py > Makefile.html
 .PHONY: html
 
-# setting ARCH
-#ARCH ?= riscv64-npc
 
 ## 1. Basic Setup and Checks
 

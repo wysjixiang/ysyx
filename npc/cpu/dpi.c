@@ -1,22 +1,32 @@
 #include "svdpi.h"
 #include "verilated_dpi.h"
 
+#include <time.h>
+#include <stdio.h>
 
-// define
-#define BASE_ADDR 0x80000000
-#define STACK_SPACE 0x9000
+#include "riscv.h"
 
 
 // var
 static uint64_t *mem_ptr = NULL;
 static uint32_t pc = 0;
 static uint32_t inst = 0;
+uint64_t *cpu_gpr = NULL;
 
+static struct {
+	const char *name;
+	uint64_t addr;
+	int space;
+}	MMIO_MAP[] = {
+	{"UART",	UART_ADDR,8},
+	{"RTC",		RTC_ADDR,8},
+};
 
-
+#define ARRLEN(arr) (int)(sizeof(arr) / sizeof(arr[0]))
+#define NR_DEV ARRLEN(MMIO_MAP)
 
 // import
-void cpu_stop();
+void cpu_stop(uint64_t a0);
 void itrace(uint64_t pc, uint8_t *s);
 void GetMemPtr(uint64_t *p){
 	mem_ptr = p;
@@ -36,15 +46,13 @@ extern "C" void pmem_write(long long waddr, long long wdata, unsigned char wmask
 
 extern "C" void dpi_that_accesses_din(svLogic din) {
 	if(din){
-        cpu_stop();
+        cpu_stop(cpu_gpr[10]); // return a0 for good / bad hit check
 	}
 	return ;
-
 }
 
 
 // DPI-C: read gpr
-uint64_t *cpu_gpr = NULL;
 extern "C" void set_gpr_ptr(const svOpenArrayHandle r) {
   cpu_gpr = (uint64_t *)(((VerilatedDpiOpenVar*)r)->datap());
 }
@@ -109,63 +117,142 @@ extern "C" void get_inst (svLogicVecVal* a){
 
 
 long long vaddr2phy(long long x){
-	if( x < BASE_ADDR || x > BASE_ADDR + STACK_SPACE){
+	if( x < BASE_ADDR || x >= BASE_ADDR + STACK_SPACE){
 		printf("Out of band! illegal addr:%llx\n",x);
 		assert(0);
 	}
 	return (x - BASE_ADDR)/8;
 }
 
+static uint64_t bool_time = 0;
+static uint64_t now_time = 0;
+
+static uint64_t get_time_internal() {
+  struct timespec now;
+  clock_gettime(CLOCK_MONOTONIC_COARSE, &now);
+  uint64_t us = now.tv_sec * 1000000 + now.tv_nsec / 1000;
+  return us;
+}
+
+void get_time() {
+  if (bool_time == 0) bool_time = get_time_internal();
+  now_time = get_time_internal() - bool_time;
+}
+
+int mmio_addr_check(uint64_t addr){
+	for(int i=0;i<NR_DEV;i++){
+		// addr range 8 bytes
+		if(addr >= MMIO_MAP[i].addr  && (addr < MMIO_MAP[i].addr + 8*MMIO_MAP[i].space)){
+			return i;
+		}
+	}
+	return -1;
+}
+
+int mmio_read(uint64_t addr, void* buf ,int len){
+	int index = mmio_addr_check(addr);
+	if(index == -1){
+		return -1;
+	}
+	return 0;
+}
+
+void mmio_write(uint64_t addr, uint64_t data, uint8_t mask){
+
+}
+
+
+
+
 extern "C" void pmem_read(long long raddr, long long *rdata,unsigned char ena) {
-	printf("raddr = %llx, ena = %d\n",raddr,ena);
+	//printf("raddr = %llx, ena = %d\n",raddr,ena);
+
   // 总是读取地址为`raddr & ~0x7ull`的8字节返回给`rdata`
   if(ena == 1){
+
+	int index = mmio_addr_check(raddr);
+	if(index != -1){
+		if(MMIO_MAP[index].name == "RTC"){
+			if(raddr == RTC_ADDR){
+				*rdata = now_time;
+			} else{
+				get_time();
+				*rdata = now_time >> 32;
+			}
+			return ;
+		}
+	}
 	uint64_t addr_align = raddr & ~0x7ull;
 	*rdata = mem_ptr[vaddr2phy(addr_align)];
-	check_mem(addr_align);
+	#ifdef DIFF_TEST
+		check_mem(addr_align);
+	#endif
   }
 }
 extern "C" void pmem_write(long long waddr, long long wdata, unsigned char wmask,unsigned char ena) {
   // 总是往地址为`waddr & ~0x7ull`的8字节按写掩码`wmask`写入`wdata`
   // `wmask`中每比特表示`wdata`中1个字节的掩码,
   // 如`wmask = 0x3`代表只写入最低2个字节, 内存中的其它字节保持不变
-	printf("waddr = %llx, wdata = %llx, mask = %d, ena = %d\n",waddr, wdata , wmask, ena);
+	//printf("waddr = %llx, wdata = %llx, mask = %d, ena = %d\n",waddr, wdata , wmask, ena);
+	
 	if(ena == 1){
+
+		// uart
+		int index = mmio_addr_check(waddr);
+		if(index != -1){
+			if(MMIO_MAP[index].name == "UART"){
+				switch(wmask){
+					case 0xff:
+						for(int i=0;i<4;i++){
+							putchar((uint8_t)wdata);
+							wdata >> 8;
+						}
+						break;
+					case 0xf:
+						for(int i=0;i<2;i++){
+							putchar((uint8_t)wdata);
+							wdata >> 8;
+						}
+						break;
+					case 0x3:
+						for(int i=0;i<1;i++){
+							putchar((uint8_t)wdata);
+							wdata >> 8;
+						}
+						break;
+					case 0x1:
+						putchar((uint8_t)wdata);
+						break;
+				}
+			}
+			return ;
+		}
+
 		uint64_t addr_align = waddr & ~0x7ull;
 		int addr_dif = waddr - addr_align;
 		unsigned char byte_data = 0;
 		long long mem_data = mem_ptr[vaddr2phy(addr_align)];
 		long long new_data = wdata;
-		//for(int i=0;i<8;i++){
-		//	byte_data = 0;
-		//	if((wmask >> 8 -i -1) & 0x01 ){
-		//		byte_data = ((wdata >> 8*(8-i-1)) & 0xFF );
-		//	} else {
-		//		byte_data = ((mem_data >> 8*(8-i-1)) & 0xFF );
-		//	}
-		//	new_data = (new_data << 8) | byte_data;
-		//}
 		
 		uint8_t *p = (uint8_t *)mem_ptr ;
-		int index = waddr - BASE_ADDR;
+		int step = waddr - BASE_ADDR;
 		switch(wmask){
 			case 0xff:
 				mem_ptr[vaddr2phy(addr_align)] = new_data;
 				break;
 			case 0xf:
-				memcpy(p+index,&new_data,4);
+				memcpy(p+step,&new_data,4);
 				break;
 			case 0x3:
-				memcpy(p+index,&new_data,2);
+				memcpy(p+step,&new_data,2);
 				break;
 			case 0x1:
-				memcpy(p+index,&new_data,1);
+				memcpy(p+step,&new_data,1);
 				break;
 		}
 
-		
-		printf("new_data = %llx\n",new_data);
-		printf("mem_data = %lx\n",mem_ptr[vaddr2phy(addr_align)]);
+		//printf("new_data = %llx\n",new_data);
+		//printf("mem_data = %lx\n",mem_ptr[vaddr2phy(addr_align)]);
 		get_sd_call(addr_align);
 	}
 }

@@ -72,8 +72,15 @@
 `define BGE        3
 
 // Mul & Div & Rem ALU
-
-
+`define MUL         0
+`define MULH        1
+`define MULHU       2
+`define MULHSU      3
+`define DIV         4
+`define DIVU        5
+`define REM         6
+`define REMU        7
+                    
 // Load ALU
 `define LD        0
 `define LW        1

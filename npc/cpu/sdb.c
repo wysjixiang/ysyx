@@ -163,8 +163,7 @@ static int cmd_help(char *args) {
 
 int sdb_mainloop() {
   if (is_batch_mode) {  // is_batch_mode = false
-    cmd_c(NULL);  
-    return 0;
+    return cmd_c(NULL);  
   }
   // read command dead loop
   for (char *str; (str = rl_gets()) != NULL; ) {

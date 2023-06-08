@@ -24,6 +24,7 @@ wire [`EXPLICIT_TYPE_NUM-1:0] explicit_code_R_GenAlu;
 wire [`EXPLICIT_TYPE_NUM-1:0] explicit_code_B_GenAlu;
 wire [`EXPLICIT_TYPE_NUM-1:0] explicit_code_LOAD_GenAlu;
 wire [`EXPLICIT_TYPE_NUM-1:0] explicit_code_STORE_GenAlu;
+wire [`EXPLICIT_TYPE_NUM-1:0] explicit_code_MDR_GenAlu; // mul & div & rem
 // add more
 
 
@@ -38,7 +39,7 @@ assign is_jal = op_i == `INST_J_JAL;
 assign is_jalr = op_i == `INST_I_JALR;
 
 // is_U
-// mul need special process!
+// mul need special process! so not take the consider for mul & div & rem
 assign is_U = 
     (op_i == `INST_I_ && (funct3 == 3'b011)) |
     (op_i == `INST_R_ && (funct3 == 3'b011 && funct7 == 7'b0)) |    // sltu 
@@ -75,7 +76,8 @@ assign explicit_type_o =
     explicit_code_R_GenAlu |
     explicit_code_B_GenAlu |
     explicit_code_LOAD_GenAlu |
-    explicit_code_STORE_GenAlu 
+    explicit_code_STORE_GenAlu |
+    explicit_code_MDR_GenAlu
     ;
 
 // The one hot coding is in accordance with that
@@ -108,12 +110,13 @@ assign explicit_code_R_GenAlu[8] = ((op_i == `INST_R_ || op_i == `INST_R_W) && f
 // INST_B_
 assign explicit_code_B_GenAlu[0] = (op_i == `INST_B_ && funct3 == 3'b000);
 assign explicit_code_B_GenAlu[1] = (op_i == `INST_B_ && funct3 == 3'b001);
-assign explicit_code_B_GenAlu[2] = (op_i == `INST_B_ && funct3 == 3'b100);
-assign explicit_code_B_GenAlu[3] = (op_i == `INST_B_ && funct3 == 3'b101);
+assign explicit_code_B_GenAlu[2] = (op_i == `INST_B_ && (funct3 == 3'b100 || funct3 == 3'b110));
+assign explicit_code_B_GenAlu[3] = (op_i == `INST_B_ && (funct3 == 3'b101 || funct3 == 3'b111));
 assign explicit_code_B_GenAlu[4] = 1'b0;
 assign explicit_code_B_GenAlu[5] = 1'b0;
 assign explicit_code_B_GenAlu[6] = 1'b0;
 assign explicit_code_B_GenAlu[7] = 1'b0;
+assign explicit_code_B_GenAlu[8] = 1'b0;
 
 
 // INST_I_LOAD
@@ -125,6 +128,7 @@ assign explicit_code_LOAD_GenAlu[4] = 1'b0;
 assign explicit_code_LOAD_GenAlu[5] = 1'b0;
 assign explicit_code_LOAD_GenAlu[6] = 1'b0;
 assign explicit_code_LOAD_GenAlu[7] = 1'b0;
+assign explicit_code_LOAD_GenAlu[8] = 1'b0;
 
 
 // INST_S
@@ -136,8 +140,18 @@ assign explicit_code_STORE_GenAlu[4] = 1'b0;
 assign explicit_code_STORE_GenAlu[5] = 1'b0;
 assign explicit_code_STORE_GenAlu[6] = 1'b0;
 assign explicit_code_STORE_GenAlu[7] = 1'b0;
+assign explicit_code_STORE_GenAlu[8] = 1'b0;
 
-
+// MUL & DIV & REM
+assign explicit_code_MDR_GenAlu[0] = ((op_i == `INST_R_ || op_i == `INST_R_W) && funct3 == 3'b000 && funct7 == 7'b1);
+assign explicit_code_MDR_GenAlu[1] = (op_i == `INST_R_ && funct3 == 3'b001 && funct7 == 7'b1);
+assign explicit_code_MDR_GenAlu[2] = (op_i == `INST_R_ && funct3 == 3'b011 && funct7 == 7'b1);
+assign explicit_code_MDR_GenAlu[3] = (op_i == `INST_R_ && funct3 == 3'b010 && funct7 == 7'b1);
+assign explicit_code_MDR_GenAlu[4] = ((op_i == `INST_R_ || op_i == `INST_R_W) && funct3 == 3'b100 && funct7 == 7'b1);
+assign explicit_code_MDR_GenAlu[5] = ((op_i == `INST_R_ || op_i == `INST_R_W) && funct3 == 3'b101 && funct7 == 7'b1);
+assign explicit_code_MDR_GenAlu[6] = ((op_i == `INST_R_ || op_i == `INST_R_W) && funct3 == 3'b110 && funct7 == 7'b1);
+assign explicit_code_MDR_GenAlu[7] = ((op_i == `INST_R_ || op_i == `INST_R_W) && funct3 == 3'b111 && funct7 == 7'b1);
+assign explicit_code_MDR_GenAlu[8] = 0;
 
 
 endmodule

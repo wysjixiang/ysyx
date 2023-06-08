@@ -92,13 +92,8 @@ assign immB = {
     1'b0
 };
 assign immU = {
-    {(WIDTH-21){inst_i[31]}},
-    inst_i[31],
-    inst_i[19:12],
-    inst_i[20],
-    inst_i[30:25],
-    inst_i[24:21],
-    1'b0
+    {{(WIDTH-20-12){inst_i[31]}},
+    inst_i[31:12],12'b0}
 };
 
 assign immJ = {

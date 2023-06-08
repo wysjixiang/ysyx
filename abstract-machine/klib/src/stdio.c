@@ -147,6 +147,13 @@ int printf(const char *fmt, ...) {
                     written += printf_integer(num);
                     break;
                 }
+                case 'c':
+                {
+                    int _ch = va_arg(args,int);
+                    putch(_ch);
+                    written++;
+                    break;
+                }
                 default:
                     // Handle unsupported fmt specifier
                     // TODO();

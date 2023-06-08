@@ -4,12 +4,8 @@
 #include <stdbool.h>
 #include <dlfcn.h>
 #include <assert.h>
+#include "riscv.h"
 
-// `direction`为`DIFFTEST_TO_DUT`时, 获取REF的寄存器状态到`dut`;
-// `direction`为`DIFFTEST_TO_REF`时, 设置REF的寄存器状态为`dut`;
-#define DIFFTEST_TO_DUT 0
-#define DIFFTEST_TO_REF 1
-#define BASE_ADDR 0x80000000
 
 // import
 uint64_t* get_gpr_ptr();

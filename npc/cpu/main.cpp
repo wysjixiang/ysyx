@@ -4,16 +4,17 @@
 #include "Vtop.h"				// contains the top class of alu module
 #include <nvboard.h>
 #include <stdio.h>
+#include "riscv.h"
 
 #define MAX_SIM_TIME 3000
 #define RST_CNT 10
 #define Base_ROM_Addr 0x80000000
 #define NOP 0x00000013
-#define STACK_SPACE 0x9000
 
-// DIFF_TEST
-#define DIFF_TEST
-//#undef DIFF_TEST
+#define RUNNING 1
+#define QUIT 	0
+#define ABORT	-1
+
 
 static TOP_NAME* dut = new TOP_NAME;
 static VerilatedVcdC *m_trace = new VerilatedVcdC;
@@ -38,7 +39,7 @@ void diftest_getmemptr(uint64_t *p);
 // export
 int cpu_exec(int n);
 void gpr_display();
-void cpu_stop();
+void cpu_stop(uint64_t a0);
 
 // DPI-C: check if inst is e-break
 extern "C" void dpi_that_accesses_din(svLogic din);
@@ -46,34 +47,39 @@ extern "C" void dpi_that_accesses_din(svLogic din);
 // 
 static uint64_t sim_time =0;
 static uint64_t cycle = 0;
+static int sim_flag =1;
+static int cpu_state = RUNNING;
 uint64_t mem[STACK_SPACE] = {0};
 
 
 int main(int argc, char *argv[]){
-	long img_size = 0;
-	img_size = ReadBinFile(argc,argv,(uint32_t *)mem);
+
+	ReadBinFile(argc,argv,(uint32_t *)mem);
 	// difftest init
-	diff_init(mem,img_size);
+	diff_init(mem,STACK_SPACE);
 	// init llvm-asm lib
 	init_disasm("riscv64-pc-linux-gnu");
 	// get mem_ptr for dpi
 	GetMemPtr(mem);
 	diftest_getmemptr(mem);
 
-	int sim_flag =1;
-	Verilated::traceEverOn(true);
-	dut -> trace(m_trace,3);
-	m_trace -> open("waveform.vcd");
+	//Verilated::traceEverOn(true);
+	//dut -> trace(m_trace,3);
 	reset(RST_CNT);
 
-    while(sim_flag == 1){
-		sim_flag = sdb_mainloop();
+    while(sim_flag){
+		sdb_mainloop();
     }
-	
-	m_trace -> close();
+
 	delete m_trace;
 	delete dut;
-    exit(EXIT_SUCCESS);
+    //exit(EXIT_SUCCESS);
+	if(cpu_state == QUIT){
+		printf("\033[32mHIT GOOD TRAP!\033[0m\n");
+	} else{
+		printf("\033[31mHIT BAD TRAP!\033[0m\n");
+	}
+	return cpu_state;
 }
 
 static void port_update(){
@@ -84,17 +90,18 @@ static void port_update(){
 
 int single_cycle() {
 	int ret =0;
-	dut->clk = 0; dut->eval(); m_trace->dump(sim_time++);
+	dut->clk = 0; dut->eval();
 	// in/out port update when clk is low. this means it will only record what has been done!
 	uint32_t inst_now = 0;
 	read_inst(&inst_now);
 	bool ref_exec = (inst_now != NOP);
-	itrace();
+	#ifdef I_TRACE
+		itrace();
+	#endif
 	port_update();
 	dut->clk = 1; 
 	dut->eval(); 
 	cycle++;
-	m_trace->dump(sim_time++);
 	#ifdef DIFF_TEST
 		if(cycle > RST_CNT + 2){
 			if(diffverify(ref_exec) < 0){
@@ -109,8 +116,8 @@ int single_cycle() {
 
 static void first_reset(){
 	dut->rst_n = 0;
-	dut->clk = 0; dut->eval(); m_trace->dump(sim_time++);
-	dut->clk = 1; dut->eval(); m_trace->dump(sim_time++);
+	dut->clk = 0; dut->eval(); 
+	dut->clk = 1; dut->eval(); 
 }
 // reset when low
 static void reset(int n) {
@@ -120,16 +127,19 @@ static void reset(int n) {
 	dut->rst_n = 1;
 }
 
-void cpu_stop(){
-	m_trace -> close();
-	delete m_trace;
-	delete dut;
-	exit(EXIT_SUCCESS);
+void cpu_stop(uint64_t a0){
+	sim_flag = 0;
+	if(a0 == 0){
+		cpu_state = QUIT;
+	} else{
+		cpu_state = ABORT;
+	}
 }
 
 int cpu_exec(int n){
 	int ret =0;
 	while(n--){
+		if(sim_flag == 0) return -1;
 		ret = single_cycle();
 		if(ret != 0) break;
 	}

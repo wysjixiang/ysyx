@@ -23,6 +23,7 @@ int parse_args(int argc, char *argv[]) {
   while ( (o = getopt_long(argc, argv, "-bhl:f:d:p:", table, NULL)) != -1) {
     switch (o) {
       case 'b': set_batch();      break;
+      case 'h': printf("help!\n");      break;
       case 1: img_file = optarg; return 0;	// set to 1 if unrecognize
       default:
         printf("Usage: %s [OPTION...] IMAGE [args]\n\n", argv[0]);
