@@ -49,7 +49,7 @@ __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction)
       data_4++;
     }
     uint8_t *data_1 = (uint8_t *)data_4;
-    for(int i=0;i<div;i++){
+    for(int i=0;i<rem;i++){
       *data_1 = paddr_read(addr,1);
       addr++;
       data_1++;
@@ -63,10 +63,12 @@ __EXPORT void difftest_regcpy(void *dut, bool direction) {
     for(int i=0;i<32;i++){
       cpu.gpr[i] = *data++;
     }
+    cpu.pc = *data++;
   } else{
     for(int i=0;i<32;i++){
       *data++ = cpu.gpr[i];
     }
+    *data++ = cpu.pc;
   }
 }
 

@@ -2,9 +2,10 @@
 
 # adding default ARCH
 ARCH ?=riscv64-npc
+NEMUFLAGS += -b
 
 ifeq ($(ARCH),riscv64-npc)
-NPCFLAGS := -b
+#NPCFLAGS := -b
 ## passing elf file to main function
 #NEMUFLAGS += -f $(IMAGE).elf
 endif

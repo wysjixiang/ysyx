@@ -10,9 +10,10 @@ static int is_batch_mode = false;
 
 
 // import
-void cpu_exec(int n);
+int cpu_exec(int n);
 void gpr_display();
-void mem_display();
+void mem_display(int index);
+void display_gpr();
 
 char *readline(const char *prompt);
 
@@ -39,11 +40,12 @@ static char* rl_gets() {
 static int cmd_help(char *args);
 
 static int cmd_c(char *args) {
-  cpu_exec(-1);     //since cpu_exec( uint64 n), so if use -1(int) as argument, the real execute steps will
+  int ret = 0;
+  ret = cpu_exec(-1);     //since cpu_exec( uint64 n), so if use -1(int) as argument, the real execute steps will
                     // be large! this is why you just put 'c' once in NEMU conmand line but the whole 
                     // program ended
                     // single step running
-  return 0;
+  return ret;
 }
 
 static int cmd_q(char *args) {
@@ -54,8 +56,7 @@ static int cmd_q(char *args) {
 static int cmd_s(char *args) {
   if(NULL == args) {
     //printf("s default step forward 1\n");
-    cpu_exec(1); // default: single step
-    return 0;
+    return (cpu_exec(1)); // default: single step
   } else{
     int len_args = strlen(args);
     uint64_t n_step = 0;
@@ -73,11 +74,10 @@ static int cmd_s(char *args) {
     }
     if(n_step == 0) {
       printf("Si arguments = 0. Please retype and make sure steps bigger than 0");
-      return 0;
+      return 1;
     } else{
       //printf("Step forward %ld \n",n_step);
-      cpu_exec(n_step);
-      return 0;
+      return cpu_exec(n_step);
     }
   }
 }
@@ -89,9 +89,33 @@ static int cmd_gpr(char *args) {
 
 
 static int cmd_mem(char *args) {
-    mem_display();
+    int len_args = strlen(args);
+    uint64_t n_step = 0;
+    int value = 0;
+    int i=0;
+    while(i < len_args) {
+
+      if(args[i] >= '0' && args[i] <= '9'){
+        value = args[i] - '0';
+      } else if(args[i] >= 'a' && args[i] <= 'f'){
+        value = args[i] - 'a' + 10;
+      } else {
+        printf("Si arguments error, it must be numbers!\n");
+        return 1;
+      }
+      n_step = n_step * 16 + value;
+      i++;
+    }
+    int index = (n_step-0x80000000)/8;
+    mem_display(index);
     return 0;
 }
+
+static int cmd_compare(char *args) {
+    display_gpr();
+    return 0;
+}
+
 
 static struct {
   const char *name;
@@ -104,8 +128,9 @@ static struct {
 
   /* TODO: Add more commands */
     { "s", "N steps forward. Add argument N after si with interval blank" , cmd_s },
-    { "gpr", "Print gpr or watch point status" ,                 cmd_gpr },
-    { "mem", "Print gpr or watch point status" ,                 cmd_mem },
+    { "gpr", "Print gpr " ,                                      cmd_gpr },
+    { "mem", "Print mem" ,                                       cmd_mem },
+    { "comp", "compare gpr of dut & ref" ,                       cmd_compare },
 };
 
 // calculate the length of an array

@@ -6,6 +6,13 @@ import "DPI-C" context function void dpi_that_accesses_din(input din);
 import "DPI-C" context function void get_pc (input logic [31:0] a);
 import "DPI-C" context function void get_inst (input logic [31:0] a);
 
+// This will read/ write mem
+import "DPI-C" function void pmem_read(
+  input longint raddr, output longint rdata, input logic ena);
+import "DPI-C" function void pmem_write(
+  input longint waddr, input longint wdata, input byte wmask, input logic ena);
+
+
 `include "INST_TYPE.v"
 
 
@@ -84,6 +91,8 @@ wire branch_jump;
 // Result need to write to Rd
 wire [WIDTH-1:0] inst_I_data;
 
+// load & store
+wire [WIDTH-1:0] load_data;
 
 // test!
 wire test_sig;
@@ -98,15 +107,24 @@ always@(posedge test_sig) begin
     $display("write_addr = %d\t",w_addr_o);
     $display("write_data = %x\t",w_data_o);
     $display("inst_type_i = %x\t",inst_type_i);
+    $display("is_branch = %d\t",is_branch_i);
     $display("is_jal = %d\t",is_jal_i);
     $display("is_jalr = %d\t",is_jalr_i);
+    $display("is_load = %d\t",is_load_i);
+    $display("is_store = %d\t",is_store_i);
     $display("opcode = %x\t",GenAlu_opcode);
     $display("op_1 = %x\t",GenAlu_op1);
     $display("op_2 = %x\t",GenAlu_op2);
+    $display("imm = %x\t",imm_i);
     $display("GenAlu_out = %x\t",GenAlu_out);
+    $display("bran_op1 = %x\t", BranchAlu_op1);
+    $display("bran_op2 = %x\t",BranchAlu_op2);
+    $display("explicit_op = %x\t",explicit_type_i);
+
 end
 
 // DPI-C communication 
+// ********************************//
 wire is_ebreak;
 assign is_ebreak = 32'h00100073 == inst_i;
 always @(*) begin
@@ -114,6 +132,42 @@ always @(*) begin
     get_pc(pc[31:0]);
     get_inst(inst_i);
 end
+
+// wire of mem
+wire [63:0] raddr;
+wire [63:0] rdata;
+wire [63:0] waddr;
+wire [63:0] wdata;
+wire [7:0] wmask;
+wire mem_read_ena;
+wire mem_write_ena;
+wire [63:0] rdata_process;
+// assign
+// take care! this is a simulation code .
+// need change for real RTL code
+assign raddr = (rs1_data_i + imm_i);
+assign mem_read_ena = is_load_i;
+assign mem_write_ena = is_store_i;
+assign waddr = (rs1_data_i + imm_i);
+assign wdata = (rs2_data_i);
+assign rdata_process = 
+    rdata >> raddr[2:0] * 8
+    ;
+
+assign wmask = 
+    ({8{(explicit_type_i[`SD])}} & 8'b11111111 ) | 
+    ({8{(explicit_type_i[`SW])}} & 8'b00001111 ) | 
+    ({8{(explicit_type_i[`SH])}} & 8'b00000011 ) | 
+    ({8{(explicit_type_i[`SB])}} & 8'b00000001 )  
+    ;
+
+always @(negedge clk) begin
+  pmem_read(raddr, rdata,mem_read_ena);
+  pmem_write(waddr, wdata, wmask,mem_write_ena);
+end
+
+
+//*****************************//
 
 
 // to controller
@@ -131,12 +185,23 @@ assign branch_jump_addr_o =
 
 // write back to regs
 // assign 
+assign load_data = 
+    ({WIDTH{(explicit_type_i[`LD])}} & rdata_process ) | 
+    ({WIDTH{(explicit_type_i[`LW]) & is_U_i}} & {{(WIDTH/2){1'b0}},rdata_process[31:0]}) | 
+    ({WIDTH{(explicit_type_i[`LW]) & !is_U_i}} & {{(WIDTH/2){rdata_process[31]}},rdata_process[31:0]}) | 
+    ({WIDTH{(explicit_type_i[`LH]) & is_U_i}} & {{(WIDTH-16){1'b0}},rdata_process[15:0]}) | 
+    ({WIDTH{(explicit_type_i[`LH]) & !is_U_i}} & {{(WIDTH-16){rdata_process[15]}},rdata_process[15:0]}) | 
+    ({WIDTH{(explicit_type_i[`LB]) & is_U_i}} & {{(WIDTH-8){1'b0}},rdata_process[7:0]}) | 
+    ({WIDTH{(explicit_type_i[`LB]) & !is_U_i}} & {{(WIDTH-8){rdata_process[7]}},rdata_process[7:0]})  
+    ;
+
 assign w_addr_en = rd_need_i;
 assign w_addr_o = rd_addr_i;
 assign w_data_o =  
     ({WIDTH{(is_jal_i | is_jalr_i)}} & (pc + 4)) |
-    ({WIDTH{GenAlu_ena & !is_jal_i & !is_jalr_i}} & GenAlu_out)  |
-    ({WIDTH{(inst_type_i == `INST_U_LUI)}} & imm_i)
+    ({WIDTH{GenAlu_ena & !is_jal_i & !is_jalr_i & !is_load_i}} & GenAlu_out)  |
+    ({WIDTH{(inst_type_i == `INST_U_LUI)}} & imm_i)     |
+    ({WIDTH{(is_load_i)}} & load_data)     
     // add more
     ;
 
@@ -184,14 +249,25 @@ assign GenAlu_op2 =
 
     // test
     (({WIDTH{imm_need_i}}) & imm_i)  |
-    (({WIDTH{rs2_need_i}}) & rs2_data_i)  
+    (({WIDTH{rs2_need_i & !imm_need_i}}) & rs2_data_i)  
+    ;
+
+//assign GenAlu_opcode = 
+//    ({(`EXPLICIT_TYPE_NUM){(inst_type_i == `INST_I_ || inst_type_i == `INST_U_AUIPC)}} & explicit_type_i)   |
+//    ({(`EXPLICIT_TYPE_NUM){(inst_type_i == `INST_B_)}} & ({{(`EXPLICIT_TYPE_NUM-1){1'b0}},1'b1}))   |
+//    ({(`EXPLICIT_TYPE_NUM){is_jal_i}} & ({{(`EXPLICIT_TYPE_NUM-1){1'b0}},1'b1}))|  
+//    ({(`EXPLICIT_TYPE_NUM){is_jalr_i}} & ({{(`EXPLICIT_TYPE_NUM-1){1'b0}},1'b1}))   
+//    ;
+
+wire opcode_equal_explicit;
+assign opcode_equal_explicit = 
+    !is_branch_i
+    // add more
     ;
 
 assign GenAlu_opcode = 
-    ({(`EXPLICIT_TYPE_NUM){(inst_type_i == `INST_I_ | inst_type_i == `INST_U_AUIPC)}} & explicit_type_i)   |
-    ({(`EXPLICIT_TYPE_NUM){(inst_type_i == `INST_B_)}} & ({{(`EXPLICIT_TYPE_NUM-1){1'b0}},1'b1}))   |
-    ({(`EXPLICIT_TYPE_NUM){is_jal_i}} & ({{(`EXPLICIT_TYPE_NUM-1){1'b0}},1'b1}))|  
-    ({(`EXPLICIT_TYPE_NUM){is_jalr_i}} & ({{(`EXPLICIT_TYPE_NUM-1){1'b0}},1'b1}))   
+    ({(`EXPLICIT_TYPE_NUM){!opcode_equal_explicit}} & ({{(`EXPLICIT_TYPE_NUM-1){1'b0}},1'b1}))   |
+    ({(`EXPLICIT_TYPE_NUM){opcode_equal_explicit}} & explicit_type_i)   
     ;
 
 
@@ -199,8 +275,8 @@ ysyx_22051468_GenAlu    #(
 	.WIDTH(WIDTH),
 	.ALU_OPCODE_WIDTH(`EXPLICIT_TYPE_NUM)
 )   GenAlu0(
-	.op_1            (GenAlu_op1),
-	.op_2            (GenAlu_op2),
+	.GenAlu_op1      (GenAlu_op1),
+	.GenAlu_op2      (GenAlu_op2),
 	.opcode          (GenAlu_opcode ),
     .is_U_i          (is_U_i)    ,
     .is_W_i          (is_W_i)    ,

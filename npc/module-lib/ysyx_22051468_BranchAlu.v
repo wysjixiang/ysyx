@@ -35,8 +35,8 @@ assign overflow = (op_1[WIDTH-1] == t_no_cin[WIDTH-1]) && (add_sub_result[WIDTH-
 // assign
 
 assign slt_out	= 
-	(is_U_i & need_sub) ^ carry |
-	(!is_U_i & need_sub) & (add_sub_result[WIDTH-1] ^ overflow);
+	(is_U_i & (1'b1 ^ carry)) |
+	(!is_U_i  & (add_sub_result[WIDTH-1] ^ overflow));
 assign branch_jump = ena & (
 	(opcode[`BEQ] & (op_1 == op_2))		|
 	(opcode[`BNQ] & !(op_1 == op_2))	|

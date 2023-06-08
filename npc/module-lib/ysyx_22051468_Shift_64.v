@@ -110,7 +110,7 @@ ysyx_22051468_BarrelShiftLayer   #(
     .N(N6)
 )   Layer6(
     .data_i    (level5_data_out) ,
-    .shamt     (level5_shamt) ,
+    .shamt     (level6_shamt) ,
     .LorR      (LorR) ,
     .high_bit  (high_bit) ,
     .data_out  (level6_data_out) 

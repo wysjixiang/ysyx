@@ -60,9 +60,9 @@ long load_img(uint32_t *inst) {
   return size;
 }
 
-long ReadBinFile(int argc, char **argv,uint32_t *inst){
+long ReadBinFile(int argc, char **argv,uint32_t *mem){
   long size =0;
 	parse_args(argc,argv);
-	size = load_img(inst);
+	size = load_img(mem);
 	return size;
 }

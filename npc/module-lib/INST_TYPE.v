@@ -54,7 +54,7 @@
 // define explicit inst type for exec
 `define EXPLICIT_TYPE_NUM   9
 
-//General ALU
+//General ALU including genalu_W
 `define ADD        0
 `define AND        1
 `define SUB        2
@@ -74,7 +74,17 @@
 // Mul & Div & Rem ALU
 
 
-// Store ALU
+// Load ALU
+`define LD        0
+`define LW        1
+`define LH        2
+`define LB        3
 
+
+// Store ALU
+`define SD        0
+`define SW        1
+`define SH        2
+`define SB        3
 
 // Ebreak
