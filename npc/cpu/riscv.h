@@ -11,16 +11,20 @@
 // define
 #define UART_ADDR 0xa00003f8
 #define RTC_ADDR 0xa0000048
+// ref_skip index
+#define REF_RUN 1
+#define REF_SKIP_NOP 2
+#define REF_SKIP_READ 3
+#define REF_SKIP_WRITE 4
 
 // I_TRACE
-#define I_TRACE
-#undef I_TRACE
-
-
 // DIFF_TEST
-#define DIFF_TEST
-#undef DIFF_TEST
-
 // ASM_INFO
+#define I_TRACE
+#define DIFF_TEST
 #define ASM_INFO
+
+// undefine
+#undef I_TRACE
+#undef DIFF_TEST
 #undef ASM_INFO

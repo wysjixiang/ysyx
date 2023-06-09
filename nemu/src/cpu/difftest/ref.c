@@ -18,6 +18,9 @@
 #include <difftest-def.h>
 #include <memory/paddr.h>
 
+
+
+
 // `direction`为`DIFFTEST_TO_DUT`时, 获取REF的寄存器状态到`dut`;
 // `direction`为`DIFFTEST_TO_REF`时, 设置REF的寄存器状态为`dut`;
 //#define DIFFTEST_TO_DUT 0

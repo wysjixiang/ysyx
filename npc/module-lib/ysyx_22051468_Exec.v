@@ -102,6 +102,7 @@ wire [WIDTH-1:0] load_data;
 wire test_sig;
 assign test_sig = ~clk & rst_n;
 
+`define debug
 `undef debug
 `ifdef debug
 always@(posedge test_sig) begin
@@ -214,7 +215,7 @@ assign load_data =
 assign w_addr_en = rd_need_i;
 assign w_addr_o = rd_addr_i;
 assign w_data_o =  
-    ({WIDTH{(is_jal_i | is_jalr_i)}} & (pc + 4)) |
+    ({WIDTH{(is_jal_i | is_jalr_i)}} & (pc + 4)) |  // 
     ({WIDTH{GenAlu_ena & !is_jal_i & !is_jalr_i & !is_load_i}} & GenAlu_out)  |
     ({WIDTH{(inst_type_i == `INST_U_LUI)}} & imm_i)     |
     ({WIDTH{(is_load_i)}} & load_data)  |

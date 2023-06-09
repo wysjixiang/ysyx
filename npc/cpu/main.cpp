@@ -30,7 +30,7 @@ int parse_args(int argc, char *argv[]);
 long load_img(uint32_t *mem);
 int ReadBinFile(int argc, char **argv,uint32_t *mem);
 void itrace();
-int diffverify(bool ref_exec);
+int diffverify(int index);
 void diff_init(uint64_t *img, long img_size);
 void read_inst(uint32_t *this_s);
 void GetMemPtr(uint64_t *p);
@@ -48,15 +48,16 @@ extern "C" void dpi_that_accesses_din(svLogic din);
 static uint64_t sim_time =0;
 static uint64_t cycle = 0;
 static int sim_flag =1;
-static int cpu_state = RUNNING;
+static int cpu_state = QUIT;
 uint64_t mem[STACK_SPACE] = {0};
+static int ref_exec = 1;
 
 
 int main(int argc, char *argv[]){
 
 	ReadBinFile(argc,argv,(uint32_t *)mem);
 	// difftest init
-	diff_init(mem,STACK_SPACE);
+	diff_init(mem,8*STACK_SPACE);
 	// init llvm-asm lib
 	init_disasm("riscv64-pc-linux-gnu");
 	// get mem_ptr for dpi
@@ -68,7 +69,9 @@ int main(int argc, char *argv[]){
 	reset(RST_CNT);
 
     while(sim_flag){
-		sdb_mainloop();
+		if(-1 == sdb_mainloop()){
+			break;
+		}
     }
 
 	delete m_trace;
@@ -90,17 +93,20 @@ static void port_update(){
 
 int single_cycle() {
 	int ret =0;
+	ref_exec = REF_RUN;
 	dut->clk = 0; dut->eval();
 	// in/out port update when clk is low. this means it will only record what has been done!
 	uint32_t inst_now = 0;
 	read_inst(&inst_now);
-	bool ref_exec = (inst_now != NOP);
 	#ifdef I_TRACE
 		itrace();
 	#endif
 	port_update();
 	dut->clk = 1; 
 	dut->eval(); 
+	if(ref_exec == REF_RUN){
+		ref_exec = (inst_now != NOP);
+	}
 	cycle++;
 	#ifdef DIFF_TEST
 		if(cycle > RST_CNT + 2){
@@ -146,4 +152,6 @@ int cpu_exec(int n){
 	return ret;
 }
 
-
+void ref_skip(int index){
+	ref_exec = index;
+}

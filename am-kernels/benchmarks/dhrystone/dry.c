@@ -795,11 +795,16 @@ int main ()
     /***************/
 
     Start_Timer();
-		//printf("Begin_Time: %d\n",io_read(AM_TIMER_UPTIME).us);
+		printf("Begin_Time: %d\n",io_read(AM_TIMER_UPTIME).us);
 
+		int now_index = 0;
     for (Run_Index = 1; Run_Index <= Number_Of_Runs; ++Run_Index)
     {
-
+			now_index++;
+			if(now_index % 2000 == 0){
+				printf("No.%d\n",Run_Index);
+				now_index = 0;
+			}
       Proc_5();
       Proc_4();
 	/* Ch_1_Glob == 'A', Ch_2_Glob == 'B', Bool_Glob == true */
@@ -849,6 +854,7 @@ int main ()
 
     Stop_Timer();
     User_Time = End_Time - Begin_Time;
+		printf("End_Time: %d\n",io_read(AM_TIMER_UPTIME).us);
 
     Done = true;
   }

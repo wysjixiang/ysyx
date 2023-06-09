@@ -28,6 +28,9 @@ static struct {
 // import
 void cpu_stop(uint64_t a0);
 void itrace(uint64_t pc, uint8_t *s);
+void ref_skip(int index);
+
+//export
 void GetMemPtr(uint64_t *p){
 	mem_ptr = p;
 }
@@ -95,8 +98,6 @@ uint64_t* get_gpr_ptr(){
 void mem_display(int index){
 	printf("Mem Value = %lx @addr:%x\n",mem_ptr[index],index * 8 + BASE_ADDR);
 }
-
-
 
 
 void read_pc(uint64_t *this_pc){
@@ -172,6 +173,7 @@ extern "C" void pmem_read(long long raddr, long long *rdata,unsigned char ena) {
 
 	int index = mmio_addr_check(raddr);
 	if(index != -1){
+		ref_skip(REF_SKIP_READ);
 		if(MMIO_MAP[index].name == "RTC"){
 			if(raddr == RTC_ADDR){
 				*rdata = now_time;
@@ -200,6 +202,7 @@ extern "C" void pmem_write(long long waddr, long long wdata, unsigned char wmask
 		// uart
 		int index = mmio_addr_check(waddr);
 		if(index != -1){
+			ref_skip(REF_SKIP_WRITE);
 			if(MMIO_MAP[index].name == "UART"){
 				switch(wmask){
 					case 0xff:

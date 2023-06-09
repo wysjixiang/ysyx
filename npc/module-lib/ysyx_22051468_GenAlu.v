@@ -22,6 +22,7 @@ module ysyx_22051468_GenAlu	#(
 wire [WIDTH-1:0] op_1;
 wire [WIDTH-1:0] op_2;
 wire is_op_w;
+wire [5:0] shamt;
 
 // add & sub add_sub_result
 wire [WIDTH-1:0] t_no_cin;
@@ -29,6 +30,12 @@ wire [WIDTH-1:0] add_sub_result;
 wire need_sub;
 
 // assign 
+assign shamt = 
+	({6{is_W_i}} & {1'b0,op_2[4:0]})  |
+	({6{!is_W_i}} & op_2[5:0])  
+	;
+
+
 assign is_op_w = 
 	is_W_i & (opcode[`SRL] | opcode[`SRA])
 	;
@@ -97,7 +104,7 @@ ysyx_22051468_Shift_64  #(
     .WIDTH(WIDTH)
 )	shift0(
     .data_i(op_1),
-    .shamt(op_2[5:0]),
+    .shamt(shamt),
     .LorR(LorR),
     .AorL(AorL),
     .data_o(shift_data)

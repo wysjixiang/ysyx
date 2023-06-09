@@ -87,3 +87,4 @@ void init_device() {
 
   IFNDEF(CONFIG_TARGET_AM, init_alarm());
 }
+

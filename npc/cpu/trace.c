@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include "riscv.h"
 
 extern "C" void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
 
@@ -20,9 +21,8 @@ void itrace(){
     uint32_t *s_inst_buf = (uint32_t *)s;
     read_pc(&pc);
     read_inst(s_inst_buf);
-    disassemble(&str[0],96,pc,s,4);
+    disassemble(&str[0],50,pc,s,4);
     #ifdef ASM_INFO
-        printf("Disasm Info:");
-        printf("PC:0x%lx, Hex_code:0x%08x,  inst:%s\n",pc, *s_inst_buf ,str);
+        printf("Disasm Info: PC:0x%lx, Hex_code:0x%08x,  inst:%s\n",pc, *s_inst_buf ,str);
     #endif
 }

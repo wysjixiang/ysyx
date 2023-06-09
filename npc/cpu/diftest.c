@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #include <stdbool.h>
 #include <dlfcn.h>
 #include <assert.h>
@@ -11,6 +12,7 @@
 uint64_t* get_gpr_ptr();
 void gpr_compare(uint64_t *ref);
 void read_pc(uint64_t *this_pc);
+void ref_skip();
 
 // dynamic lib func
 void (*ref_difftest_memcpy)(uint64_t addr, void *buf, size_t n, bool direction) = NULL;
@@ -32,7 +34,7 @@ static bool is_sd_call = 0;
 static uint64_t sd_addr = 0;
 
 
-int diffverify(bool ref_exec);
+int diffverify(int ref_exec);
 int check_gpr();
 int check_mem(uint64_t addr);
 void diff_init(uint64_t *img, long img_size);
@@ -67,9 +69,9 @@ void get_sd_call(uint64_t addr){
     sd_addr = addr;
 }
 
-int diffverify(bool ref_exec){
+int diffverify(int ref_exec){
     int ret = 0;
-    if(ref_exec){
+    if(ref_exec == REF_RUN){
         ref_difftest_exec(1);
         if(is_sd_call){
             ret = check_mem(sd_addr);
@@ -77,6 +79,22 @@ int diffverify(bool ref_exec){
         }
     if(ret != 0) check_gpr();
     else ret = check_gpr();
+    } else if(ref_exec == REF_SKIP_READ){
+        uint64_t this_pc = 0;
+        read_pc(&this_pc);
+        uint64_t *gpr = get_gpr_ptr();
+        uint64_t _cpu_gpr[gpr_num];
+        memcpy(_cpu_gpr,gpr,8*(gpr_num-1));
+        _cpu_gpr[gpr_num-1] = this_pc;
+        ref_difftest_regcpy(_cpu_gpr,DIFFTEST_TO_REF);
+    } else if(ref_exec == REF_SKIP_WRITE){
+        uint64_t this_pc = 0;
+        read_pc(&this_pc);
+        uint64_t *gpr = get_gpr_ptr();
+        uint64_t _cpu_gpr[gpr_num];
+        memcpy(_cpu_gpr,gpr,8*(gpr_num-1));
+        _cpu_gpr[gpr_num-1] = this_pc;
+        ref_difftest_regcpy(_cpu_gpr,DIFFTEST_TO_REF);
     }
     return ret;
 }
