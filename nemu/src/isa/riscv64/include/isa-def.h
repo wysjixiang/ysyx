@@ -18,9 +18,30 @@
 
 #include <common.h>
 
+enum{
+  CSR_MCAUSE = 0,
+  CSR_MSTATUS,
+  CSR_MEPC,
+  CSR_MTVEC,
+
+  //
+  CSR_NUM
+};
+
+
+typedef struct {
+  
+  // add csr
+  word_t csr[CSR_NUM];
+
+} riscv64_CSR;
+
+
 typedef struct {
   word_t gpr[32];
   vaddr_t pc;
+
+
 } riscv64_CPU_state;
 
 // decode

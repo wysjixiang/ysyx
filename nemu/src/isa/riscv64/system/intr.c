@@ -19,8 +19,18 @@ word_t isa_raise_intr(word_t NO, vaddr_t epc) {
   /* TODO: Trigger an interrupt/exception with ``NO''.
    * Then return the address of the interrupt/exception vector.
    */
+  riscv64_csr.csr[CSR_MCAUSE] = NO;
+  riscv64_csr.csr[CSR_MEPC] = epc;
 
-  return 0;
+
+  // etrace!
+  #ifdef CONFIG_ETRACE
+    printf("\033[32mE_Trace! Exception occurs\033[0m @ %lx!\n",epc);
+    printf("\033[31mException Number\033[0m: %lx, \033[31mMepc\033[0m = %lx\n",NO,epc);
+
+  #endif
+
+  return riscv64_csr.csr[CSR_MTVEC];
 }
 
 word_t isa_query_intr() {

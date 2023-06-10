@@ -32,6 +32,7 @@ f(30) f(31)
 __am_asm_trap:
   addi sp, sp, -CONTEXT_SIZE
 
+  # this is a push stack operation to save context
   MAP(REGS, PUSH)
 
   csrr t0, mcause
@@ -47,6 +48,7 @@ __am_asm_trap:
   or t1, t1, a0
   csrw mstatus, t1
 
+  # here we use sp as the args to _am_irq_handle. sp is pointing to a Context structure!!
   mv a0, sp
   jal __am_irq_handle
 

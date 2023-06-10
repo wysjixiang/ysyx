@@ -30,6 +30,7 @@ void init_isa();
 
 // reg
 extern CPU_state cpu;
+extern riscv64_CSR riscv64_csr;
 void isa_reg_display();
 word_t isa_reg_str2val(const char *name, bool *success);
 

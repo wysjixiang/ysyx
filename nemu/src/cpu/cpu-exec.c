@@ -26,6 +26,14 @@
 #define MAX_INST_TO_PRINT 30
 
 CPU_state cpu = {};
+// define csr register
+// another way to set mstatus as 0xa000001800 is set it in init() in init.c
+riscv64_CSR riscv64_csr = {
+  .csr = {
+  0,0xa00001800,0,0
+  }
+};
+
 uint64_t g_nr_guest_inst = 0;
 static uint64_t g_timer = 0; // unit: us
 static bool g_print_step = false;
