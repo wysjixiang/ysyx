@@ -71,6 +71,31 @@ int printf_integer(int num)
     return written;
 }
 
+int printf_lx(uint64_t num)
+{
+    int written = 0;
+    // Convert the num to string
+    uint64_t temp = num;
+    uint64_t digit_count = 1;
+    while (temp /= 16)
+    {
+        digit_count *= 16;
+    }
+
+    while (digit_count > 0)
+    {
+        int digit = num / digit_count;
+        if(digit >= 0 && digit <= 9){
+            putch('0' + digit);
+        } else{
+            putch('A' + digit - 10);
+        }
+        num %= digit_count;
+        digit_count /= 16;
+    }
+    return written;
+}
+
 int vsprintf(char *out, const char *fmt, va_list ap) {
   int written = 0;
   char ch;
@@ -154,6 +179,22 @@ int printf(const char *fmt, ...) {
                     written++;
                     break;
                 }
+                case 'x':
+                {
+                    uint32_t _x = va_arg(args,uint32_t);
+                    written +=printf_lx(_x);
+                    break;
+                }
+                case 'l':
+                {
+                    ch = *fmt++;
+                    if(ch == 'x'){
+                        uint64_t _lx = va_arg(args,uint64_t);
+                        written += printf_lx(_lx);
+                        break;
+                    }
+                }
+
                 default:
                     // Handle unsupported fmt specifier
                     // TODO();

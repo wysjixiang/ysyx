@@ -16,9 +16,14 @@ Context* __am_irq_handle(Context *c) {
       // mcause is what you set at csr.mcause 
       // if you get into yeild(), you will find a inst that puts -1 in a7
       // and I set the mcause as a7 in NEMU. You can definately modify it!
-      case 0XFFFFFFFFFFFFFFFF: 
+      case -1: 
         ev.event = EVENT_YIELD;
         break;
+
+      case 0 ... 19:
+        ev.event = EVENT_SYSCALL;
+        break;
+
       default: 
       ev.event = EVENT_ERROR; break;
     }

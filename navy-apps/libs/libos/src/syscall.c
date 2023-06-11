@@ -6,6 +6,8 @@
 #include "syscall.h"
 
 // helper macros
+// this macros is used to select args in certain position
+// _args4(...) is a4, and a4 is the forth arg in args table!!
 #define _concat(x, y) x ## y
 #define concat(x, y) _concat(x, y)
 #define _args(n, list) concat(_arg, n) list
@@ -42,7 +44,8 @@
 #endif
 
 intptr_t _syscall_(intptr_t type, intptr_t a0, intptr_t a1, intptr_t a2) {
-  register intptr_t _gpr1 asm (GPR1) = type;
+  // this will tell compiler to let _gpr1 = type, and _gpr1 is register
+  register intptr_t _gpr1 asm (GPR1) = type;  // this is the syscall type, and it put type to a7!
   register intptr_t _gpr2 asm (GPR2) = a0;
   register intptr_t _gpr3 asm (GPR3) = a1;
   register intptr_t _gpr4 asm (GPR4) = a2;
