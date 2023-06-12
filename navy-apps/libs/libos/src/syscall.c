@@ -5,6 +5,15 @@
 #include <time.h>
 #include "syscall.h"
 
+
+// var
+extern intptr_t end;
+static intptr_t program_break = (intptr_t)&end;
+
+
+
+
+
 // helper macros
 // this macros is used to select args in certain position
 // _args4(...) is a4, and a4 is the forth arg in args table!!
@@ -65,12 +74,20 @@ int _open(const char *path, int flags, mode_t mode) {
 }
 
 int _write(int fd, void *buf, size_t count) {
-  _exit(SYS_write);
-  return 0;
+  int ret;
+  ret = _syscall_(SYS_write, fd, (intptr_t)buf, count);
+  return ret;
 }
 
 void *_sbrk(intptr_t increment) {
-  return (void *)-1;
+  int ret;
+  ret = _syscall_(SYS_brk,program_break + increment,0,0);
+  if(ret == 0){
+    program_break += increment;
+    return (void *)(program_break - increment);
+  } else{
+    return (void *)-1;
+  }
 }
 
 int _read(int fd, void *buf, size_t count) {
@@ -83,6 +100,7 @@ int _close(int fd) {
   return 0;
 }
 
+// off_t is long
 off_t _lseek(int fd, off_t offset, int whence) {
   _exit(SYS_lseek);
   return 0;
@@ -97,6 +115,15 @@ int _execve(const char *fname, char * const argv[], char *const envp[]) {
   _exit(SYS_execve);
   return 0;
 }
+
+
+
+
+
+
+
+
+
 
 // Syscalls below are not used in Nanos-lite.
 // But to pass linking, they are defined as dummy functions.
