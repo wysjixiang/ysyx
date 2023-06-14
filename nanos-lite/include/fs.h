@@ -11,7 +11,14 @@ enum {SEEK_SET, SEEK_CUR, SEEK_END};
 
 #endif
 
-enum {FD_STDIN, FD_STDOUT, FD_STDERR, FD_FB};
+enum {FD_STDIN,
+      FD_STDOUT, 
+      FD_STDERR, 
+      FD_EVENTS,
+      FD_DISP,
+      FD_FB, 
+      FD_NUM,
+      };
 
 // typedef creates a name for ReadFn() function pointer and the name is ReadFn
 typedef size_t (*ReadFn) (void *buf, size_t offset, size_t len);

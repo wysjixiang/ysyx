@@ -14,11 +14,12 @@ void get_table_head(Finfo *table){
   p = table;
 }
 
-//export
+//sys_function
 uintptr_t sys_open(uintptr_t name);
 uintptr_t sys_read(uintptr_t fd,uintptr_t buf,uintptr_t len);
 uintptr_t sys_lseek(uintptr_t fd,uintptr_t offset,uintptr_t whence);
 uintptr_t sys_write(uintptr_t fd,uintptr_t buf,uintptr_t len);
+int sys_gettimeofday(uintptr_t tv);
 
 void do_syscall(Context *c) {
   uintptr_t a[4];
@@ -67,6 +68,10 @@ void do_syscall(Context *c) {
       c->GPR_a0 = 0;
       break;
 
+    case SYS_gettimeofday:
+      c->GPR_a0 = sys_gettimeofday(a[0]);
+      break;
+
     default: panic("Unhandled syscall ID = %d", a[3]);
   }
 }
@@ -90,10 +95,9 @@ uintptr_t sys_open(uintptr_t name){
 
 uintptr_t sys_read(uintptr_t fd,uintptr_t buf,uintptr_t len){
   uintptr_t ret;
-  if(fd == FD_STDIN){
+  if(fd < FD_NUM){
     ret = p[fd].read((void *)buf,0,len);
   } else{
-
     if(len + p[fd].disk_ptr > p[fd].size){
       len = p[fd].size - p[fd].disk_ptr;
     }
@@ -104,40 +108,8 @@ uintptr_t sys_read(uintptr_t fd,uintptr_t buf,uintptr_t len){
   return ret;
 }
 
-uintptr_t sys_lseek(uintptr_t fd,uintptr_t offset,uintptr_t whence){
-
-  uintptr_t ret = -1;
-  int num = get_table_num();
-  if(fd >= num){
-    printf("fd wrong!\n");
-    assert(0);
-  }
-  switch(whence){
-    case SEEK_SET:
-      if(offset < 0){
-        printf("offset < 0!\n");
-        return -1;
-      }
-      p[fd].disk_ptr = offset;
-      ret = offset;
-      break;
-
-    case SEEK_CUR:
-      p[fd].disk_ptr += offset;
-      ret = p[fd].disk_ptr;
-      break;
-
-    case SEEK_END:
-      p[fd].disk_ptr = p[fd].size + offset;
-      ret = p[fd].disk_ptr;
-
-      break;
-  }
-  return ret;
-}
-
-
 uintptr_t sys_write(uintptr_t fd,uintptr_t buf,uintptr_t len){
+  /*
   uintptr_t ret;
   if(fd == FD_STDOUT || fd == FD_STDERR){
     ret = p[fd].write((void *)buf,0,len);
@@ -152,4 +124,76 @@ uintptr_t sys_write(uintptr_t fd,uintptr_t buf,uintptr_t len){
     p[fd].disk_ptr += len;
   }
   return ret;
+  */
+
+  uintptr_t ret;
+  if(fd < FD_NUM){
+    ret = p[fd].write((void *)buf,0,len);
+  } else{
+    if(len + p[fd].disk_ptr > p[fd].size){
+      len = p[fd].size - p[fd].disk_ptr;
+    }
+    uintptr_t offset = p[fd].disk_offset + p[fd].disk_ptr;
+    ret = ramdisk_write((void *)buf, offset, len);
+    p[fd].disk_ptr += len;
+  }
+  return ret;
+}
+
+uintptr_t sys_lseek(uintptr_t fd,uintptr_t offset,uintptr_t whence){
+
+  uintptr_t ret = -1;
+  intptr_t _offset = (intptr_t)offset;
+  int num = get_table_num();
+  if(fd >= num){
+    printf("fd wrong!\n");
+    assert(0);
+  }
+  switch(whence){
+    case SEEK_SET:
+      if(_offset < 0){
+        printf("_offset < 0!\n");
+        return -1;
+      }
+      p[fd].disk_ptr = _offset;
+      ret = _offset;
+      break;
+
+    case SEEK_CUR:
+      p[fd].disk_ptr += _offset;
+      if(p[fd].disk_ptr > p[fd].size){
+        printf("SEKK_CUR Overstep, offset = %d\n",_offset);
+        p[fd].disk_ptr -= _offset;
+        return -1;
+      }
+      ret = p[fd].disk_ptr;
+      break;
+
+    case SEEK_END:
+      if(_offset > 0 || p[fd].disk_ptr + _offset < 0){
+        printf("SEEK_END Overstep\n");
+        return -1;
+      }
+      p[fd].disk_ptr = p[fd].size + _offset;
+      ret = p[fd].disk_ptr;
+
+      break;
+  }
+  return ret;
+}
+
+
+
+      
+int sys_gettimeofday(uintptr_t tv){
+
+  uint64_t *p = (uint64_t *)tv;
+  uint64_t sec;
+  uint64_t us;
+  uint64_t num = io_read(AM_TIMER_UPTIME).us;
+  sec = num / 1000000;
+  us = num - sec*100000;
+  p[0] = sec;
+  p[1] = us;
+  return 0;
 }

@@ -27,7 +27,7 @@ void __am_gpu_config(AM_GPU_CONFIG_T *cfg) {
 void __am_gpu_fbdraw(AM_GPU_FBDRAW_T *ctl) {
   // add some codes
   int num=0;
-  int bytes = 4;
+  static int bytes = 4;
   uintptr_t p = FB_ADDR + (ctl->y) * w * bytes + ctl->x * bytes;
   for(int i=0;i<ctl->h;i++){
     for(int j=0;j< bytes * ctl->w; j+= bytes){
