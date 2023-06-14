@@ -55,12 +55,12 @@ void NDL_OpenCanvas(int *w, int *h) {
   else {
     uint32_t data[2];
     read(disp_fd,data,0); // get w and h
-    if(*w >= data[0]) {
+    if(*w >= data[0] || *w == 0) {
       screen_w = data[0];
     } else {
       screen_w = *w;
     }
-    if(*h >= data[1]) {
+    if(*h >= data[1] || *h ==0) {
       screen_h = data[1];
     } else {
       screen_h = *h;
@@ -91,6 +91,9 @@ void NDL_DrawRect(uint32_t *pixels, int x, int y, int w, int h) {
   long offset = (y0 + y)*sys_w + (x0 + x);
   lseek(fb_fd,offset * bytes,SEEK_SET);
   uint8_t *p = (uint8_t *)pixels;
+
+  if(w == 0) w = sys_w;
+  if(h == 0) h = sys_h;
 
   write(fb_fd,(void *)p,w);
   write(fb_fd,(void *)p,h);

@@ -16,6 +16,7 @@ void get_table_head(Finfo *table){
 
 //sys_function
 uintptr_t sys_open(uintptr_t name);
+uintptr_t sys_close(uintptr_t fd);
 uintptr_t sys_read(uintptr_t fd,uintptr_t buf,uintptr_t len);
 uintptr_t sys_lseek(uintptr_t fd,uintptr_t offset,uintptr_t whence);
 uintptr_t sys_write(uintptr_t fd,uintptr_t buf,uintptr_t len);
@@ -48,7 +49,7 @@ void do_syscall(Context *c) {
       break;
     
     case SYS_close:
-      c->GPR_a0 = 0;
+      c->GPR_a0 = sys_close(a[0]);
       break;
 
     case SYS_write:
@@ -81,9 +82,9 @@ uintptr_t sys_open(uintptr_t name){
 
   int num = get_table_num();
   char *_name = (char *)name;
-  for(int i=3;i<num;i++){
+  for(int i=0;i<num;i++){
     if(strcmp(_name,p[i].name) == 0){
-      printf("name = %s\n",_name);
+      printf("filename = %s open!\n",_name);
       return i;
     }
   }
@@ -91,6 +92,14 @@ uintptr_t sys_open(uintptr_t name){
   printf("File not found!\n");
   assert(0);
   return -1;
+}
+
+
+uintptr_t sys_close(uintptr_t fd){
+
+  printf("filename = %s closed!\n",p[fd].name);
+  p[fd].disk_ptr = 0;
+  return 0;
 }
 
 uintptr_t sys_read(uintptr_t fd,uintptr_t buf,uintptr_t len){
@@ -109,23 +118,6 @@ uintptr_t sys_read(uintptr_t fd,uintptr_t buf,uintptr_t len){
 }
 
 uintptr_t sys_write(uintptr_t fd,uintptr_t buf,uintptr_t len){
-  /*
-  uintptr_t ret;
-  if(fd == FD_STDOUT || fd == FD_STDERR){
-    ret = p[fd].write((void *)buf,0,len);
-  } else{
-
-    if(len + p[fd].disk_ptr > p[fd].size){
-      len = p[fd].size - p[fd].disk_ptr;
-    }
-
-    uintptr_t offset = p[fd].disk_offset + p[fd].disk_ptr;
-    ret = ramdisk_write((void *)buf, offset, len);
-    p[fd].disk_ptr += len;
-  }
-  return ret;
-  */
-
   uintptr_t ret;
   if(fd < FD_NUM){
     ret = p[fd].write((void *)buf,0,len);

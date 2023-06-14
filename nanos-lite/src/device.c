@@ -72,7 +72,7 @@ size_t dispinfo_read(void *buf, size_t offset, size_t len) {
 // we use a special way to write this frame file
 size_t fb_write(const void *buf, size_t offset, size_t len) {
 
-  static int flag_fb_write = false;
+  static int flag_fb_write = 0;
   static int w_fb = 0;
   static int h_fb = 0;
   static int x_fb = 0;
@@ -98,7 +98,6 @@ size_t fb_write(const void *buf, size_t offset, size_t len) {
     case 3:
       y_fb = len;
       flag_fb_write = 0;
-      printf("w = %d, h = %d, x = %d, y = %d\n",w_fb,h_fb,x_fb,y_fb);
       io_write(AM_GPU_FBDRAW, x_fb, y_fb, (void *)buf, w_fb, h_fb, true);
       break;
   }
