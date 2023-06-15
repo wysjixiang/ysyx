@@ -73,6 +73,7 @@ int main(int argc, char *argv[], char *envp[]) {
 
   font = new BDF_Font(font_fname);
   logo_sf = SDL_LoadBMP("/share/pictures/projectn.bmp");
+  printf("w=%d,h=%d\n",logo_sf->w,logo_sf->h);
   assert(logo_sf);
   set_i_max();
 

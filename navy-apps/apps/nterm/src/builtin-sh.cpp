@@ -23,6 +23,11 @@ static void sh_prompt() {
 }
 
 static void sh_handle_cmd(const char *cmd) {
+  if(strcmp(cmd,"echo\n") == 0){
+    printf("%s\n",cmd);
+  } else{
+    printf("not reco\n");
+  }
 }
 
 void builtin_sh_run() {

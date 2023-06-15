@@ -9,7 +9,7 @@
 static int evtdev = -1;
 static int fbdev = -1;
 static int screen_w = 0, screen_h = 0;
-static int sys_w = 0, sys_h = 0;
+static uint32_t sys_w = 0, sys_h = 0;
 static int x0 = 0, y0 = 0;
 
 static int dev_fd = 0;
@@ -21,6 +21,7 @@ void get_all_fd();
 void get_dev_fd();
 void get_disp_fd();
 void get_fb_fd();
+void get_syscanvas(uint32_t *Sys_w, uint32_t *Sys_h);
 
 
 uint32_t NDL_GetTicks() {
@@ -53,25 +54,22 @@ void NDL_OpenCanvas(int *w, int *h) {
   }
   // add
   else {
-    uint32_t data[2];
-    read(disp_fd,data,0); // get w and h
-    if(*w >= data[0] || *w == 0) {
-      screen_w = data[0];
+    if(*w >= sys_w || *w == 0) {
+      screen_w = sys_w;
     } else {
       screen_w = *w;
     }
-    if(*h >= data[1] || *h ==0) {
-      screen_h = data[1];
+    if(*h >= sys_h || *h ==0) {
+      screen_h = sys_h;
     } else {
       screen_h = *h;
     }
 
-    sys_w = data[0];
-    sys_h = data[1];
+    *w = screen_w;
+    *h = screen_h;
 
-
-    x0 = (data[0] - screen_w)/2;
-    y0 = (data[1] - screen_h)/2;
+    x0 = (sys_w - screen_w)/2;
+    y0 = (sys_h - screen_h)/2;
 
   }
   printf("width:%d\n",screen_w);
@@ -92,8 +90,8 @@ void NDL_DrawRect(uint32_t *pixels, int x, int y, int w, int h) {
   lseek(fb_fd,offset * bytes,SEEK_SET);
   uint8_t *p = (uint8_t *)pixels;
 
-  if(w == 0) w = sys_w;
-  if(h == 0) h = sys_h;
+  if(w == 0) w = screen_w;
+  if(h == 0) h = screen_h;
 
   write(fb_fd,(void *)p,w);
   write(fb_fd,(void *)p,h);
@@ -120,13 +118,24 @@ int NDL_Init(uint32_t flags) {
   if (getenv("NWM_APP")) {
     evtdev = 3;
   }
-
+  
+  // remember first get all fd
   get_all_fd();
+
+  get_syscanvas(&sys_w, &sys_h);
 
   return 0;
 }
 
 void NDL_Quit() {
+}
+
+
+void get_syscanvas(uint32_t *Sys_w, uint32_t *Sys_h){
+    uint32_t data[2];
+    read(disp_fd,data,0); // get w and h
+    *Sys_w = data[0];
+    *Sys_h = data[1];
 }
 
 

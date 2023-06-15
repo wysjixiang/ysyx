@@ -7,10 +7,69 @@
 void SDL_BlitSurface(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst, SDL_Rect *dstrect) {
   assert(dst && src);
   assert(dst->format->BitsPerPixel == src->format->BitsPerPixel);
+
+  int w,h;
+
+  int src_x, src_y,dst_x,dst_y;
+  if(srcrect == NULL){
+    src_x = 0;
+    src_y =0;
+    w = src->w;
+    h = src->h;
+  } else{
+    src_x = srcrect->x;
+    src_y = srcrect->y;
+    w = srcrect->w;
+    h = srcrect->h;
+  }
+
+  if(dstrect == NULL){
+    dst_x = 0;
+    dst_y = 0;
+  } else{
+    dst_x = dstrect->x;
+    dst_y = dstrect->y;
+  }
+  
+  assert(src_x + w <= src->w);
+  assert(src_y + h <= src->h);
+  assert(dst_x + w <= dst->w);
+  assert(dst_y + h <= dst->h);
+
+
+  uint32_t offset_src = src_x + src_y * src->w;
+  uint32_t offset_dst = dst_x + dst_y * dst->w;
+  uint32_t *p_src = (uint32_t *)src->pixels;
+  uint32_t *p_dst = (uint32_t *)dst->pixels;
+
+  for(int i=0;i<h;i++){
+    for(int j=0;j<w;j++){
+      p_dst[offset_dst + j] = p_src[offset_src + j];
+    }
+    offset_dst += dst->w;
+    offset_src += src->w;
+  }
+
 }
 
 void SDL_FillRect(SDL_Surface *dst, SDL_Rect *dstrect, uint32_t color) {
-  assert(0);
+
+  uint32_t *p = (uint32_t *)dst->pixels;
+
+  if(dstrect != NULL){
+    uint32_t offset = dstrect->x + dstrect->y * dst->w;
+    for(int i=0;i<dstrect->h;i++){
+      for(int j=0;j<dstrect->w;j++){
+        p[offset + j] = color;
+      }
+      offset += dst->w;
+    }
+  } else{
+    for(int i=0;i<dst->h * dst->pitch /sizeof(uint32_t);i++){
+      p[i] = color;
+    }
+  }
+
 }
 
 void SDL_UpdateRect(SDL_Surface *s, int x, int y, int w, int h) {
@@ -20,7 +79,9 @@ void SDL_UpdateRect(SDL_Surface *s, int x, int y, int w, int h) {
     assert(0);
   }
   
-  NDL_OpenCanvas(&s->w, &s->h);
+  // setting canvas size
+  //NDL_OpenCanvas(&s->w, &s->h);
+  // plot
   NDL_DrawRect((uint32_t *)s->pixels,x, y, w, h);
 
 }
