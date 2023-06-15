@@ -25,6 +25,8 @@ static void sh_prompt() {
 static void sh_handle_cmd(const char *cmd) {
   if(strcmp(cmd,"echo\n") == 0){
     printf("%s\n",cmd);
+  } else if(strcmp(cmd,"quit\n") == 0){
+    exit(0);
   } else{
     printf("not reco\n");
   }
