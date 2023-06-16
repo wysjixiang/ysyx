@@ -175,8 +175,6 @@ uintptr_t sys_lseek(uintptr_t fd,uintptr_t offset,uintptr_t whence){
 }
 
 
-
-      
 int sys_gettimeofday(uintptr_t tv){
 
   uint64_t *p = (uint64_t *)tv;
@@ -184,7 +182,7 @@ int sys_gettimeofday(uintptr_t tv){
   uint64_t us;
   uint64_t num = io_read(AM_TIMER_UPTIME).us;
   sec = num / 1000000;
-  us = num - sec*100000;
+  us = num - sec*1000000;
   p[0] = sec;
   p[1] = us;
   return 0;
