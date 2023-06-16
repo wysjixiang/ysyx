@@ -85,9 +85,11 @@ void NDL_OpenCanvas(int *w, int *h) {
 // in fact, we have not yet give rom for frambe buffer at nanos since I dont thing it is necessary
 void NDL_DrawRect(uint32_t *pixels, int x, int y, int w, int h) {
 
+  /*
   int bytes = 4;
   long offset = (y0 + y)*sys_w + (x0 + x);
   lseek(fb_fd,offset * bytes,SEEK_SET);
+  */
   uint8_t *p = (uint8_t *)pixels;
 
   if(w == 0) w = screen_w;

@@ -8,24 +8,18 @@
 
 void get_screen_wh(int *w, int *h);
 
+
+// test found that the palettes from src and dst are the same !
 void SDL_BlitSurface(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst, SDL_Rect *dstrect) {
   assert(dst && src);
   assert(dst->format->BitsPerPixel == src->format->BitsPerPixel);
 
-  int w,h;
+  int dst_x,dst_y;
 
-  int src_x, src_y,dst_x,dst_y;
-  if(srcrect == NULL){
-    src_x = 0;
-    src_y =0;
-    w = src->w;
-    h = src->h;
-  } else{
-    src_x = srcrect->x;
-    src_y = srcrect->y;
-    w = srcrect->w;
-    h = srcrect->h;
-  }
+  int src_x = (srcrect == NULL ? 0 : srcrect->x);
+  int src_y = (srcrect == NULL ? 0 : srcrect->y);
+  int w = (srcrect == NULL ? src->w : srcrect->w);
+  int h = (srcrect == NULL ? src->h : srcrect->h);
 
   if(dstrect == NULL){
     dst_x = 0;
@@ -71,20 +65,45 @@ void SDL_BlitSurface(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst, SDL_
 
 void SDL_FillRect(SDL_Surface *dst, SDL_Rect *dstrect, uint32_t color) {
 
+  printf("color = %x\n",color);
   // if 8 bits
   if(dst->format->BytesPerPixel == 1){
     uint8_t *p_8 = dst->pixels;
+    uint8_t color_index = 0;
+    // test
+    /*
+    for(int i=0;i<dst->format->palette->ncolors;i++){
+      if((dst->format->palette->colors[color].r << 2*8) |
+        (dst->format->palette->colors[color].g << 8)          |
+        (dst->format->palette->colors[color].b ) == color){
+          color_index = i;
+          break;
+        }
+    }
+    */
+    for(int i=0;i<dst->format->palette->ncolors;i++){
+      if( dst->format->palette->colors[i].val == color){
+          color_index = i;
+          printf("Found it!\n");
+          break;
+        }
+    }
+    //
+    //color = (dst->format->palette->colors[color].r << 2*8) |
+    //(dst->format->palette->colors[color].g << 8)          |
+    //(dst->format->palette->colors[color].b );
+
     if(dstrect != NULL){
       int offset_8 = dstrect->x + dstrect->y * dst->w;
       for(int i=0;i<dstrect->h;i++){
         for(int j=0;j<dstrect->w;j++){
-          p_8[offset_8 + j] = color;
+          p_8[offset_8 + j] = color_index;
         }
         offset_8 += dst->w;
       }
     } else{
         for(int i=0;i<dst->h * dst->pitch ;i++){
-          p_8[i] = color;
+          p_8[i] = color_index;
         }
     }
   } else{
@@ -122,17 +141,22 @@ void SDL_UpdateRect(SDL_Surface *s, int x, int y, int w, int h) {
 
   // if 8 bit pixel
   if(s->format->BitsPerPixel == 8){
+    int w_8,h_8;
     if(w == 0 || h == 0){
-      get_screen_wh(&w, &h);
-    } 
+      get_screen_wh(&w_8, &h_8);
+    } else{
+      w_8 = w;
+      h_8 = h;
+    }
     uint8_t *palette = s->pixels;
-    for(int i=0;i<w*h;i++){
+    for(int i=0;i<w_8*h_8;i++){
       p[i] = (s->format->palette->colors[palette[i]].r << 2*8) |
+      (s->format->palette->colors[palette[i]].a << 3*8)          |
       (s->format->palette->colors[palette[i]].g << 8)          |
       (s->format->palette->colors[palette[i]].b )
       ;
     }
-    NDL_DrawRect(p,x, y, w, h);
+    NDL_DrawRect(p,x, y, w_8, h_8);
   } else{
     NDL_DrawRect((uint32_t *)s->pixels,x, y, w, h);
   }
@@ -258,11 +282,12 @@ void SDL_SetPalette(SDL_Surface *s, int flags, SDL_Color *colors, int firstcolor
 
   if(s->flags & SDL_HWSURFACE) {
     assert(ncolors == 256);
-    for (int i = 0; i < ncolors; i ++) {
-      uint8_t r = colors[i].r;
-      uint8_t g = colors[i].g;
-      uint8_t b = colors[i].b;
-    }
+    //for (int i = 0; i < ncolors; i ++) {
+    //  uint8_t r = colors[i].r;
+    //  uint8_t g = colors[i].g;
+    //  uint8_t b = colors[i].b;
+    //}
+
     SDL_UpdateRect(s, 0, 0, 0, 0);
   }
 }
@@ -317,8 +342,10 @@ uint32_t SDL_MapRGBA(SDL_PixelFormat *fmt, uint8_t r, uint8_t g, uint8_t b, uint
 }
 
 int SDL_LockSurface(SDL_Surface *s) {
+  assert(0);
   return 0;
 }
 
 void SDL_UnlockSurface(SDL_Surface *s) {
+  assert(0);
 }
