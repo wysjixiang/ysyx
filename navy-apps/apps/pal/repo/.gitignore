@@ -1,0 +1,9 @@
+
+*.*
+*
+*/
+!data/
+!sdlpal.cfg
+!Makefile
+!README.MD
+!.gitignore

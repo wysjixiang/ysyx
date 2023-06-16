@@ -97,8 +97,8 @@ void NDL_DrawRect(uint32_t *pixels, int x, int y, int w, int h) {
 
   write(fb_fd,(void *)p,w);
   write(fb_fd,(void *)p,h);
-  write(fb_fd,(void *)p,x0+x);
-  write(fb_fd,(void *)p,y0+y);
+  write(fb_fd,(void *)p,x0 + x);
+  write(fb_fd,(void *)p,y0 + y);
 
 }
 

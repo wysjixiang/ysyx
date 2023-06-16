@@ -39,6 +39,37 @@ void SDL_BlitSurface(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst, SDL_
   uint32_t *p_src = (uint32_t *)src->pixels;
   uint32_t *p_dst = (uint32_t *)dst->pixels;
 
+//#define TEST
+#ifdef TEST
+  if(src->format->BytesPerPixel == 1){
+    uint8_t *p_src_8 = (uint8_t *)src->pixels;
+    uint8_t *p_dst_8 = (uint8_t *)dst->pixels;
+    for(int i=0;i<h;i++){
+      for(int j=0;j<w;j++){
+      uint32_t src_pelette = (src->format->palette->colors[p_src_8[offset_src + j]].r << 2*8) |
+      (src->format->palette->colors[p_src_8[offset_src + j]].a << 3*8)          |
+      (src->format->palette->colors[p_src_8[offset_src + j]].g << 8)          |
+      (src->format->palette->colors[p_src_8[offset_src + j]].b );
+        for(int i=0;i<256;i++){
+          uint32_t dst_pelette = (dst->format->palette->colors[i].r << 2*8) |
+          (dst->format->palette->colors[i].a << 3*8)          |
+          (dst->format->palette->colors[i].g << 8)          |
+          (dst->format->palette->colors[i].b );
+          if(dst_pelette == src_pelette){
+            p_dst_8[offset_dst + j] = i;
+            break;
+          }
+          if(i == 255){
+            printf("error!\n");
+            assert(0);
+          }
+        }
+      }
+      offset_dst += dst->w;
+      offset_src += src->w;
+    }
+  }
+#else
   // if 8 bit pixels
   if(src->format->BytesPerPixel == 1){
 
@@ -52,7 +83,9 @@ void SDL_BlitSurface(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst, SDL_
       offset_dst += dst->w;
       offset_src += src->w;
     }
-  } else{
+  } 
+#endif
+  else{
     for(int i=0;i<h;i++){
       for(int j=0;j<w;j++){
         p_dst[offset_dst + j] = p_src[offset_src + j];
@@ -140,6 +173,35 @@ void SDL_UpdateRect(SDL_Surface *s, int x, int y, int w, int h) {
   static uint32_t p[400*300];
 
   // if 8 bit pixel
+
+#define TEST1
+#ifdef TEST1
+  if(s->format->BitsPerPixel == 8){
+    int w_8,h_8;
+    if(w == 0 || h == 0){
+      get_screen_wh(&w_8, &h_8);
+    } else{
+      w_8 = w;
+      h_8 = h;
+    }
+
+    uint32_t offset = x + y*s->w;
+    int cnt = 0;
+    for(int i=0;i<h_8;i++){
+      for(int j=0;j<w_8;j++){
+        uint32_t pixel_data = 
+        (s->format->palette->colors[s->pixels[offset+j]].a << 3*8)       |
+        (s->format->palette->colors[s->pixels[offset+j]].r << 2*8)       |
+        (s->format->palette->colors[s->pixels[offset+j]].g << 8)         |
+        (s->format->palette->colors[s->pixels[offset+j]].b );
+        p[cnt++] = pixel_data;
+      }
+      offset += s->w;
+    }
+    NDL_DrawRect(p,x, y, w_8, h_8);
+  } 
+
+#else
   if(s->format->BitsPerPixel == 8){
     int w_8,h_8;
     if(w == 0 || h == 0){
@@ -157,7 +219,9 @@ void SDL_UpdateRect(SDL_Surface *s, int x, int y, int w, int h) {
       ;
     }
     NDL_DrawRect(p,x, y, w_8, h_8);
-  } else{
+  } 
+#endif
+  else{
     NDL_DrawRect((uint32_t *)s->pixels,x, y, w, h);
   }
 
@@ -282,11 +346,11 @@ void SDL_SetPalette(SDL_Surface *s, int flags, SDL_Color *colors, int firstcolor
 
   if(s->flags & SDL_HWSURFACE) {
     assert(ncolors == 256);
-    //for (int i = 0; i < ncolors; i ++) {
-    //  uint8_t r = colors[i].r;
-    //  uint8_t g = colors[i].g;
-    //  uint8_t b = colors[i].b;
-    //}
+    for (int i = 0; i < ncolors; i ++) {
+      uint8_t r = colors[i].r;
+      uint8_t g = colors[i].g;
+      uint8_t b = colors[i].b;
+    }
 
     SDL_UpdateRect(s, 0, 0, 0, 0);
   }
