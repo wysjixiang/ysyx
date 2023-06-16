@@ -8,6 +8,9 @@ static const char *keyname[] = {
   _KEYS(keyname)
 };
 
+static uint8_t KeyBoardState[83] = {0};
+
+
 int SDL_PushEvent(SDL_Event *ev) {
   assert(0);
   return 0;
@@ -29,6 +32,7 @@ int SDL_PollEvent(SDL_Event *ev) {
   for(int i=0;i< 83;i++){
     if(strcmp(keyname[i],buf+3) == 0){
       ev->key.keysym.sym = i;
+      KeyBoardState[i] = !ev->type;
     }
   }
   return 1;
@@ -48,6 +52,5 @@ int SDL_PeepEvents(SDL_Event *ev, int numevents, int action, uint32_t mask) {
 }
 
 uint8_t* SDL_GetKeyState(int *numkeys) {
-  assert(0);
-  return NULL;
+  return KeyBoardState;
 }

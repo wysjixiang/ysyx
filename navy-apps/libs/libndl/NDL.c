@@ -21,8 +21,8 @@ void get_all_fd();
 void get_dev_fd();
 void get_disp_fd();
 void get_fb_fd();
+void get_screen_wh(int *w, int *h);
 void get_syscanvas(uint32_t *Sys_w, uint32_t *Sys_h);
-
 
 uint32_t NDL_GetTicks() {
 	struct timeval tv;
@@ -155,4 +155,10 @@ void get_disp_fd(){
 
 void get_fb_fd(){
   fb_fd = open("/dev/fb","r");
+}
+
+
+void get_screen_wh(int *w, int *h){
+  *w = screen_w;
+  *h = screen_h;
 }

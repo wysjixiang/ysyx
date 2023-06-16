@@ -18,6 +18,8 @@ void NDL_CloseAudio();
 int NDL_PlayAudio(void *buf, int len);
 int NDL_QueryAudio();
 
+// export to video.c
+
 #ifdef __cplusplus
 }
 #endif
