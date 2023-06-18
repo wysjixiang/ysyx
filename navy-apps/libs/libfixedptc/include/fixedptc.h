@@ -127,35 +127,41 @@ typedef	__uint128_t fixedptud;
 
 /* Multiplies a fixedpt number with an integer, returns the result. */
 static inline fixedpt fixedpt_muli(fixedpt A, int B) {
-	printf("muli\n");
+	// test
+	return (A * B);
+	// test
+	/*
 	fixedpt ret;
-	ret = (fixedpt)((int64_t)A * fixedpt_fromint(B) >> FIXEDPT_FBITS);
+	ret = (((int64_t)A << 8) * B) >> 8;
 	return ret;
+	*/
 }
 
 /* Divides a fixedpt number with an integer, returns the result. */
 static inline fixedpt fixedpt_divi(fixedpt A, int B) {
-	printf("divi\n");
+	return A/B;
+
 	fixedpt ret;
-	ret = (fixedpt)((int64_t)A / fixedpt_fromint(B) << FIXEDPT_FBITS);
+	ret = ((int64_t)A / (B << 8)) << 8;
 	return ret;
 }
 
 /* Multiplies two fixedpt numbers, returns the result. */
 static inline fixedpt fixedpt_mul(fixedpt A, fixedpt B) {
-	printf("mul\n");
-	return ((A * B) >> FIXEDPT_FBITS);
+	fixedpt ret;
+	ret = ((int64_t)(A * B)) >> 8;
+	return ret;
 }
 
 
 /* Divides two fixedpt numbers, returns the result. */
 static inline fixedpt fixedpt_div(fixedpt A, fixedpt B) {
-	printf("div\n");
-	return ((A / B) << FIXEDPT_FBITS);
+	fixedpt ret;
+	ret = (((int64_t)(A) << 8) / B);
+	return ret;
 }
 
 static inline fixedpt fixedpt_abs(fixedpt A) {
-	printf("abs\n");
 	// negative
 	if(A >> (FIXEDPT_BITS-1)){
 		return (~A + 1);
@@ -165,7 +171,6 @@ static inline fixedpt fixedpt_abs(fixedpt A) {
 }
 
 static inline fixedpt fixedpt_ceil(fixedpt A) {
-	printf("ceil\n");
 	// negative
 	if(A >> (FIXEDPT_BITS-1)){
 		if(A & 0xFF == 0){
@@ -187,7 +192,6 @@ static inline fixedpt fixedpt_ceil(fixedpt A) {
 }
 
 static inline fixedpt fixedpt_floor(fixedpt A) {
-	printf("floor\n");
 	return A & 0xFFFFFF00;
 }
 

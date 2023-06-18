@@ -101,41 +101,17 @@ void SDL_FillRect(SDL_Surface *dst, SDL_Rect *dstrect, uint32_t color) {
   // if 8 bits
   if(dst->format->BytesPerPixel == 1){
     uint8_t *p_8 = dst->pixels;
-    uint8_t color_index = 0;
-    // test
-    /*
-    for(int i=0;i<dst->format->palette->ncolors;i++){
-      if((dst->format->palette->colors[color].r << 2*8) |
-        (dst->format->palette->colors[color].g << 8)          |
-        (dst->format->palette->colors[color].b ) == color){
-          color_index = i;
-          break;
-        }
-    }
-    */
-    for(int i=0;i<dst->format->palette->ncolors;i++){
-      if( dst->format->palette->colors[i].val == color){
-          color_index = i;
-          printf("Found it!\n");
-          break;
-        }
-    }
-    //
-    //color = (dst->format->palette->colors[color].r << 2*8) |
-    //(dst->format->palette->colors[color].g << 8)          |
-    //(dst->format->palette->colors[color].b );
-
     if(dstrect != NULL){
       int offset_8 = dstrect->x + dstrect->y * dst->w;
       for(int i=0;i<dstrect->h;i++){
         for(int j=0;j<dstrect->w;j++){
-          p_8[offset_8 + j] = color_index;
+          p_8[offset_8 + j] = color;
         }
         offset_8 += dst->w;
       }
     } else{
         for(int i=0;i<dst->h * dst->pitch ;i++){
-          p_8[i] = color_index;
+          p_8[i] = color;
         }
     }
   } else{
