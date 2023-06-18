@@ -1,6 +1,7 @@
 #include <common.h>
 #include "syscall.h"
 #include <fs.h>
+#include <proc.h>
 
 // import
 size_t ramdisk_read(void *buf, size_t offset, size_t len);
@@ -20,7 +21,9 @@ uintptr_t sys_close(uintptr_t fd);
 uintptr_t sys_read(uintptr_t fd,uintptr_t buf,uintptr_t len);
 uintptr_t sys_lseek(uintptr_t fd,uintptr_t offset,uintptr_t whence);
 uintptr_t sys_write(uintptr_t fd,uintptr_t buf,uintptr_t len);
+uintptr_t sys_execve(uintptr_t fname);
 int sys_gettimeofday(uintptr_t tv);
+void naive_uload(PCB *pcb, const char *filename);
 
 void do_syscall(Context *c) {
   uintptr_t a[4];
@@ -32,7 +35,9 @@ void do_syscall(Context *c) {
   switch (a[3]) {
 
     case SYS_exit:
-      halt(a[0]);
+      char *name = "/bin/menu";
+      sys_execve((uintptr_t)name);
+      //halt(a[0]);
       break;
 
     case SYS_yield:
@@ -71,6 +76,10 @@ void do_syscall(Context *c) {
 
     case SYS_gettimeofday:
       c->GPR_a0 = sys_gettimeofday(a[0]);
+      break;
+
+    case SYS_execve:
+      c->GPR_a0 = sys_execve(a[0]);
       break;
 
     default: panic("Unhandled syscall ID = %d", a[3]);
@@ -185,5 +194,11 @@ int sys_gettimeofday(uintptr_t tv){
   us = num - sec*1000000;
   p[0] = sec;
   p[1] = us;
+  return 0;
+}
+
+
+uintptr_t sys_execve(uintptr_t fname){
+  naive_uload(NULL, (char *)fname);
   return 0;
 }

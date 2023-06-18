@@ -22,11 +22,11 @@ static void sh_prompt() {
   sh_printf("sh> ");
 }
 
-static void sh_handle_cmd(const char *cmd) {
+static int sh_handle_cmd(const char *cmd) {
   if(strcmp(cmd,"echo\n") == 0){
     printf("%s\n",cmd);
   } else if(strcmp(cmd,"quit\n") == 0){
-    exit(0);
+    return -1;
   } else{
     printf("not reco\n");
   }
@@ -42,7 +42,7 @@ void builtin_sh_run() {
       if (ev.type == SDL_KEYUP || ev.type == SDL_KEYDOWN) {
         const char *res = term->keypress(handle_key(&ev));
         if (res) {
-          sh_handle_cmd(res);
+          if(sh_handle_cmd(res) != 0) return;
           sh_prompt();
         }
       }
