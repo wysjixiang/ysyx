@@ -98,7 +98,6 @@ void SDL_BlitSurface(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst, SDL_
 
 void SDL_FillRect(SDL_Surface *dst, SDL_Rect *dstrect, uint32_t color) {
 
-  printf("color = %x\n",color);
   // if 8 bits
   if(dst->format->BytesPerPixel == 1){
     uint8_t *p_8 = dst->pixels;
@@ -171,24 +170,19 @@ void SDL_UpdateRect(SDL_Surface *s, int x, int y, int w, int h) {
   // and more reasonable to get the length from SDL_init
   // but ... you know I'm lazy
   static uint32_t p[400*300];
+  if(w == 0 || h == 0){
+    get_screen_wh(&w, &h);
+  }
+
+  int cnt = 0;
+  uint32_t offset = x + y*s->w;
 
   // if 8 bit pixel
-
 #define TEST1
 #ifdef TEST1
   if(s->format->BitsPerPixel == 8){
-    int w_8,h_8;
-    if(w == 0 || h == 0){
-      get_screen_wh(&w_8, &h_8);
-    } else{
-      w_8 = w;
-      h_8 = h;
-    }
-
-    uint32_t offset = x + y*s->w;
-    int cnt = 0;
-    for(int i=0;i<h_8;i++){
-      for(int j=0;j<w_8;j++){
+    for(int i=0;i<h;i++){
+      for(int j=0;j<w;j++){
         uint32_t pixel_data = 
         (s->format->palette->colors[s->pixels[offset+j]].a << 3*8)       |
         (s->format->palette->colors[s->pixels[offset+j]].r << 2*8)       |
@@ -198,7 +192,7 @@ void SDL_UpdateRect(SDL_Surface *s, int x, int y, int w, int h) {
       }
       offset += s->w;
     }
-    NDL_DrawRect(p,x, y, w_8, h_8);
+    NDL_DrawRect(p,x, y, w, h);
   } 
 
 #else
@@ -221,8 +215,18 @@ void SDL_UpdateRect(SDL_Surface *s, int x, int y, int w, int h) {
     NDL_DrawRect(p,x, y, w_8, h_8);
   } 
 #endif
-  else{
-    NDL_DrawRect((uint32_t *)s->pixels,x, y, w, h);
+  else if(s->format->BitsPerPixel == 32){
+    // 32bit pixel
+    uint32_t *pixel_32 = (uint32_t *)s->pixels;
+    for(int i=0;i<h;i++){
+      for(int j=0;j<w;j++){
+        p[cnt++] = pixel_32[offset + j];
+      }
+      offset += s->w;
+    }
+    NDL_DrawRect(p,x, y, w, h);
+  } else{
+    assert(0);
   }
 
 }
