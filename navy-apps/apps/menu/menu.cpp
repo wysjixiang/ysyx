@@ -30,7 +30,7 @@ struct MenuItem {
   {"FCEUX (Super Mario Bros)", "/bin/fceux", "/share/games/nes/mario.nes"},
   {"FCEUX (100 in 1)", "/bin/fceux", "/share/games/nes/100in1.nes"},
   {"Flappy Bird", "/bin/bird", NULL},
-  {"PAL - Xian Jian Qi Xia Zhuan", "/bin/pal", NULL},
+  {"PAL - Xian Jian Qi Xia Zhuan", "/bin/pal", "--skip"},
   {"NPlayer", "/bin/nplayer", NULL},
   {"coremark", "/bin/coremark", NULL},
   {"dhrystone", "/bin/dhrystone", NULL},

@@ -1,14 +1,20 @@
 #include <memory.h>
+#include <common.h>
 
 static void *pf = NULL;
 
 void* new_page(size_t nr_page) {
-  return NULL;
+  void *ret = pf;
+  pf = (void *)(((uintptr_t)pf) + nr_page*PGSIZE);
+  return ret;
 }
 
 #ifdef HAS_VME
 static void* pg_alloc(int n) {
-  return NULL;
+  void *ret = pf;
+  pf = (void *)(((uintptr_t)pf) + n*PGSIZE);
+  memset(ret,0,n*PGSIZE);
+  return ret;
 }
 #endif
 

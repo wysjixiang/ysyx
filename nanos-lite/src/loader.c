@@ -22,7 +22,7 @@ static bool Elf_MagicCheck(Elf64_Ehdr elf_head);
 uintptr_t Load_img(const char* ElfFile);
 
 
-static uintptr_t loader(PCB *pcb, const char *filename) {
+uintptr_t loader(PCB *pcb, const char *filename) {
 
   uintptr_t ret = Load_img(filename);
   if(ret == 0){

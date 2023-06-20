@@ -7,6 +7,9 @@
 size_t ramdisk_read(void *buf, size_t offset, size_t len);
 size_t ramdisk_write(void const *buf, size_t offset, size_t len);
 int get_table_num();
+Context* schedule(Context *prev);
+void switch_boot_pcb();
+PCB *get_upcb();
 
 
 static Finfo *p = NULL;
@@ -21,11 +24,12 @@ uintptr_t sys_close(uintptr_t fd);
 uintptr_t sys_read(uintptr_t fd,uintptr_t buf,uintptr_t len);
 uintptr_t sys_lseek(uintptr_t fd,uintptr_t offset,uintptr_t whence);
 uintptr_t sys_write(uintptr_t fd,uintptr_t buf,uintptr_t len);
-uintptr_t sys_execve(uintptr_t fname);
+uintptr_t sys_execve(uintptr_t fname, uintptr_t argv, uintptr_t envp);
 int sys_gettimeofday(uintptr_t tv);
 void naive_uload(PCB *pcb, const char *filename);
+void context_uload(PCB *_pcb, const char *filename, char *argv[], char *envp[]);
 
-void do_syscall(Context *c) {
+Context *do_syscall(Context *c) {
   uintptr_t a[4];
   a[0] = c->GPR_a0;
   a[1] = c->GPR_a1;
@@ -36,13 +40,12 @@ void do_syscall(Context *c) {
 
     case SYS_exit:
       char *name = "/bin/menu";
-      sys_execve((uintptr_t)name);
+      sys_execve((uintptr_t)name,0,0);
       //halt(a[0]);
       break;
 
     case SYS_yield:
-      yield();
-      c->GPRx = 0; // syscal return 0
+      c = schedule(c);
       break;
 
     case SYS_open:
@@ -58,6 +61,8 @@ void do_syscall(Context *c) {
       break;
 
     case SYS_write:
+
+      yield();
       // right now. this function is not well behaved!!
       // we just return the size it wants to write, but not consider some cases!!
       // if meet bugs, remember to modify!
@@ -79,11 +84,12 @@ void do_syscall(Context *c) {
       break;
 
     case SYS_execve:
-      c->GPR_a0 = sys_execve(a[0]);
+      c->GPR_a0 = sys_execve(a[0],a[1],a[2]);
       break;
 
     default: panic("Unhandled syscall ID = %d", a[3]);
   }
+  return c;
 }
 
 
@@ -198,7 +204,10 @@ int sys_gettimeofday(uintptr_t tv){
 }
 
 
-uintptr_t sys_execve(uintptr_t fname){
-  naive_uload(NULL, (char *)fname);
+uintptr_t sys_execve(uintptr_t fname, uintptr_t argv, uintptr_t envp){
+ 
+  context_uload(get_upcb(), (char *)fname,(char **)argv,(char **)envp);
+  switch_boot_pcb();
+  yield();
   return 0;
 }

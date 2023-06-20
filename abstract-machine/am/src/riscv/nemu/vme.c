@@ -69,6 +69,25 @@ void __am_switch(Context *c) {
 void map(AddrSpace *as, void *va, void *pa, int prot) {
 }
 
-Context *ucontext(AddrSpace *as, Area kstack, void *entry) {
-  return NULL;
+
+
+Context *ucontext(AddrSpace *as, Area kstack, void *entry,char *argv[], char *envp[]) {
+  uintptr_t _end = (uintptr_t )kstack.end;
+
+  uintptr_t p = _end - 36*sizeof(uintptr_t);
+
+  uintptr_t *data = (uintptr_t *)malloc(2*8);
+  data[0] = (uintptr_t)argv;
+  data[1] = (uintptr_t)envp;
+
+  // init sp
+  Context *content = (Context *)p;
+  #define sp_pos 2
+  #define a0_pos 10
+  content->GPR_a1 = (uintptr_t)data;
+  content->gpr[sp_pos] = p;
+  content->mstatus = 0xa00001800;
+  content->mepc = (uintptr_t)entry - 4;
+
+  return (Context *)p;
 }

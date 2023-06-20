@@ -52,13 +52,31 @@ bool cte_init(Context*(*handler)(Event, Context*)) {
   return true;
 }
 
+
+
 Context *kcontext(Area kstack, void (*entry)(void *), void *arg) {
-  return NULL;
+  uintptr_t _end = (uintptr_t )kstack.end;
+  uintptr_t _begin = (uintptr_t )kstack.start;
+
+  uintptr_t p = _end - 36*sizeof(uintptr_t);
+
+  *(uint64_t *)_begin = p;
+
+  // init sp
+  Context *content = (Context *)p;
+  #define sp_pos 2
+  #define a0_pos 10
+  content->gpr[a0_pos] = (uintptr_t)arg;
+  content->gpr[sp_pos] = p;
+  content->mstatus = 0xa00001800;
+  content->mepc = (uintptr_t)entry - 4;
+
+  return (Context *)p;
 }
 
 void yield() {
   // first put -1 in a7
-  asm volatile("li a7, -1; ecall");
+  asm volatile("li a7, 1; ecall");
 }
 
 bool ienabled() {
