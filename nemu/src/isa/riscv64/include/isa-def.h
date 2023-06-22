@@ -23,6 +23,7 @@ enum{
   CSR_MSTATUS,
   CSR_MEPC,
   CSR_MTVEC,
+  CSR_SATP,
 
   //
   CSR_NUM
@@ -51,6 +52,6 @@ typedef struct {
   } inst;
 } riscv64_ISADecodeInfo;
 
-#define isa_mmu_check(vaddr, len, type) (MMU_DIRECT)
+//#define isa_mmu_check(vaddr, len, type) (MMU_DIRECT)
 
 #endif

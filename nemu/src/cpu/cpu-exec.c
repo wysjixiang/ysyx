@@ -28,11 +28,18 @@
 CPU_state cpu = {};
 // define csr register
 // another way to set mstatus as 0xa000001800 is set it in init() in init.c
+
+#define _satp 4
 riscv64_CSR riscv64_csr = {
   .csr = {
-  0,0xa00001800,0,0
+  0,0xa00001800,0,0,0
   }
 };
+
+uintptr_t get_csr_satp(){
+  return riscv64_csr.csr[_satp];
+}
+
 
 uint64_t g_nr_guest_inst = 0;
 static uint64_t g_timer = 0; // unit: us

@@ -64,10 +64,7 @@ void context_uload(PCB *_pcb, const char *filename, char *argv[], char *envp[]){
     printf("name = %s\n",pp[0]);
     printf("name = %s\n",pp[1]);
   }
-
-
   uintptr_t _entry = loader(NULL, filename);
-
   _pcb->cp = ucontext(&_pcb->as,_pcb->as.area, (void *)_entry,pp, envp);
 
 }
@@ -81,14 +78,16 @@ void context_kload(PCB *_pcb,void (*entry)(void *), void *arg){
   _pcb->as.area.start = (void *)pcb_begin;
   _pcb->as.area.end = (void *)pcb_end;
 
-  pcb->cp = kcontext(_pcb->as.area, entry, arg);
+  _pcb->cp = kcontext(_pcb->as.area, entry, arg);
 }
 
 void init_proc() {
   context_kload(&pcb[0], hello_fun, (void *)0x100);
-  context_uload(&pcb[1], "/bin/menu",0,0);
+  context_uload(&pcb[1], "/bin/pal",NULL,NULL);
+  //context_kload(&pcb[1], test, 0);
   switch_boot_pcb();
 }
+
 
 /*
 void init_proc() {
@@ -97,14 +96,16 @@ void init_proc() {
   Log("Initializing processes...");
 
   // load program here
-  naive_uload(NULL,"/bin/menu");
+  naive_uload(NULL,"/bin/pal");
 }
 */
+
 
 Context* schedule(Context *prev) {
   static int pool = 0;
   current->cp = prev;
   current = &pcb[pool%2];
+  //current = &pcb[1];
   pool++;
 
   return current->cp;

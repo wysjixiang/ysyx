@@ -26,9 +26,10 @@
 #define csr_index_mstatus 0x300
 #define csr_index_mepc 0x341
 #define csr_index_mtvec 0x305
+#define csr_index_satp 0x180
 static uint16_t csr_index_csr[] =
 {
-  0x342,0x300,0x341,0x305
+  0x342,0x300,0x341,0x305,0x180
 };
 
 
@@ -38,7 +39,7 @@ void FuncCallRet(int rd,int rs1, uint64_t addr, char type);
 enum {
   TYPE_I, TYPE_U, TYPE_S,
   TYPE_J, TYPE_R,
-  TYPE_B, TYPE_N,
+  TYPE_B, TYPE_N, TYPE_C
   // none
 };
 
@@ -64,15 +65,18 @@ enum {
 
 static uint16_t csr_index = 0;
 static uint64_t csr_val = 0;
-void csrR(uint32_t i){
-  csr_index = BITS(i,31,20);
+void csrR(uint32_t inst){
+  csr_index = BITS(inst,31,20);
   for(int i=0;i<(sizeof(csr_index_csr)/ sizeof(uint16_t));i++){
     if(csr_index == csr_index_csr[i]){
       csr_index = i;
       csr_val = riscv64_csr.csr[i];
-      break;
+      return ;
     }
   }
+  printf("No valid csr!\n");
+  printf("inst = %x\n",inst);
+  assert(0);
 }
 
 
@@ -88,7 +92,7 @@ static void decode_operand(Decode *s, int *rd, word_t *src1, word_t *src2, word_
     case TYPE_J:                   immJ(); break;
     case TYPE_R: src1R(); src2R();         break;
     case TYPE_B: src1R(); src2R(); immB(); break;
-    case TYPE_N: src1R(); csrR(i);         break;
+    case TYPE_C: src1R(); csrR(i);         break;
     //TODO();
   }
 }
@@ -265,9 +269,9 @@ static void decode_operand(Decode *s, int *rd, word_t *src1, word_t *src2, word_
   INSTPAT("0000000 00001 00000 000 00000 11100 11", ebreak , N, NEMUTRAP(s->pc, R(10))); \
   INSTPAT("0000000 00000 00000 000 00000 11100 11", ecall , N, s->dnpc = isa_raise_intr(gpr(17),s->pc)); \
   INSTPAT("0011000 00010 00000 000 00000 11100 11", mret , N, s->dnpc = riscv64_csr.csr[CSR_MEPC]); \
-  INSTPAT("??????? ????? ????? 001 ????? 11100 11", CSRRW , N, \
+  INSTPAT("??????? ????? ????? 001 ????? 11100 11", CSRRW , C, \
     riscv64_csr.csr[csr_index] = src1, R(rd) = csr_val); \
-  INSTPAT("??????? ????? ????? 010 ????? 11100 11", CSRRS , N, \
+  INSTPAT("??????? ????? ????? 010 ????? 11100 11", CSRRS , C, \
     riscv64_csr.csr[csr_index] = csr_val | src1, R(rd) = csr_val); \
   INSTPAT("??????? ????? ????? ??? ????? ????? ??", inv    , N, INV(s->pc)); \
 } while(0)

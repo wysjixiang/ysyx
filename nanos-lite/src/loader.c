@@ -15,6 +15,7 @@ size_t ramdisk_read(void *buf, size_t offset, size_t len);
 uintptr_t sys_open(uintptr_t name);
 uintptr_t sys_read(uintptr_t fd,uintptr_t buf,uintptr_t len);
 uintptr_t sys_lseek(uintptr_t fd,uintptr_t offset,uintptr_t whence);
+void* new_page(size_t nr_page);
 
 
 
@@ -48,8 +49,6 @@ uintptr_t Load_img(const char* ElfFile){
   // most importantly, we need to know the Elf_type(32 or 64. But this time we use 64, so if using 32, need to modify this code!) 
   // and section header numbers and section header string tab offset.
 	Elf64_Ehdr elf_head;
-
-
   // move the pointer to the start of file!
   if(sys_lseek(index,0,0) == -1){
     printf("error!\n");
@@ -60,10 +59,13 @@ uintptr_t Load_img(const char* ElfFile){
 	// check if is ELF file 
 	// this is the magic number
   if(false == Elf_MagicCheck(elf_head)) return -1;
-
-
 	// parse Ehdr for Phdr to know the size of program segment
-	Elf64_Phdr *phdr = (Elf64_Phdr *)malloc(sizeof(Elf64_Phdr) * elf_head.e_phnum);
+  // we do not use malloc since malloc and newpage function both use the same heap area!!
+  // and they do not communicate!!! so just use newpage func here
+	//Elf64_Phdr *phdr = (Elf64_Phdr *)malloc(sizeof(Elf64_Phdr) * elf_head.e_phnum);
+
+	Elf64_Phdr *phdr = (Elf64_Phdr *)new_page(1);
+  printf("phdr addr = %lx\n",(uintptr_t)phdr);
   
   // move the pointer to the phoff!
   if(sys_lseek(index,elf_head.e_phoff,0) == -1){
@@ -71,7 +73,6 @@ uintptr_t Load_img(const char* ElfFile){
     assert(0);
   }
   sys_read(index,(uintptr_t)phdr,sizeof(Elf64_Phdr) * elf_head.e_phnum);
-
   //ramdisk_read( (void *)phdr, file_table[index].disk_offset + elf_head.e_phoff, sizeof(Elf64_Phdr) * elf_head.e_phnum);
   // for now, we get the phdr info
 	for(int i=0;i<elf_head.e_phnum;i++){

@@ -51,9 +51,6 @@ bool cte_init(Context*(*handler)(Event, Context*)) {
 
   return true;
 }
-
-
-
 Context *kcontext(Area kstack, void (*entry)(void *), void *arg) {
   uintptr_t _end = (uintptr_t )kstack.end;
   uintptr_t _begin = (uintptr_t )kstack.start;

@@ -33,6 +33,7 @@ bool vme_init(void* (*pgalloc_f)(int), void (*pgfree_f)(void*)) {
   int i;
   for (i = 0; i < LENGTH(segments); i ++) {
     void *va = segments[i].start;
+
     for (; va < segments[i].end; va += PGSIZE) {
       map(&kas, va, va, 0);
     }
@@ -66,7 +67,53 @@ void __am_switch(Context *c) {
   }
 }
 
+
+
+#define BITMASK(bits) ((1ull << (bits)) - 1)
+#define BITS(x, hi, lo) (((x) >> (lo)) & BITMASK((hi) - (lo) + 1)) // similar to x[hi:lo] in verilog
+
 void map(AddrSpace *as, void *va, void *pa, int prot) {
+
+  uintptr_t *page1= (uintptr_t *)as->ptr;
+  uintptr_t *page2 = NULL;
+  uintptr_t *page3 = NULL;
+  uintptr_t _va = (uintptr_t)va;
+  uint32_t va0 = BITS(_va,20,12);
+  uint32_t va1 = BITS(_va,29,21);
+  uint32_t va2 = BITS(_va,38,30);
+
+  uintptr_t *p1 = page1 + va2;
+  #define ppn_end 53
+  #define ppn_begin 10
+
+  // if this page is already set
+  if((*p1 & 0x1) == 1){
+    page2 = (uintptr_t *)(BITS(*p1,ppn_end,ppn_begin) << 12);
+  } else{
+    page2 = (uintptr_t *)pgalloc_usr(PGSIZE);
+    // setting this PTE
+    *p1 = (((uintptr_t)page2 >> 12) << 10) | 1ull << 63 | 0x1;
+  }
+
+  uintptr_t *p2 = page2 + va1;
+  // if this page is already set
+  if((*p2 & 0x1) == 1){
+    page3 = (uintptr_t *)(BITS(*p2,ppn_end,ppn_begin) << 12);
+  } else{
+    page3 = (uintptr_t *)pgalloc_usr(PGSIZE);
+    // setting this PTE
+    *p2 = (((uintptr_t)page3 >> 12) << 10) | 1ull << 63 | 0x1;
+  }
+
+  uintptr_t *p3 = page3 + va0;
+  // if this page is already set
+  if((*p3 & 0x1) == 1){
+    printf("Error when paging!\n");
+    assert(0);
+  } else{
+    *p3 = (((uintptr_t)pa >> 12) << 10) | 1ull << 63 | 0xF;
+  }
+
 }
 
 
