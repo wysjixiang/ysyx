@@ -4,11 +4,16 @@
 
 // user_handler is a function pointer, which has two args and return Context*
 static Context* (*user_handler)(Event, Context*) = NULL;
+void __am_get_cur_as(Context *c);
+void __am_switch(Context *c);
 
 
 // this args C is got from __am_asm_trap
 // if you get into it, you will find that c is the context before ecall
 Context* __am_irq_handle(Context *c) {
+
+  __am_get_cur_as(c);
+
   if (user_handler) {
     Event ev = {0};
     switch (c->mcause) {
@@ -32,6 +37,7 @@ Context* __am_irq_handle(Context *c) {
     assert(c != NULL);
   }
 
+  __am_switch(c);
   return c;
 }
 
@@ -67,6 +73,7 @@ Context *kcontext(Area kstack, void (*entry)(void *), void *arg) {
   content->gpr[sp_pos] = p;
   content->mstatus = 0xa00001800;
   content->mepc = (uintptr_t)entry - 4;
+  content->pdir = NULL;
 
   return (Context *)p;
 }

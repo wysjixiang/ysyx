@@ -11,9 +11,6 @@ extern intptr_t end;
 static intptr_t program_break = (intptr_t)&end;
 
 
-
-
-
 // helper macros
 // this macros is used to select args in certain position
 // _args4(...) is a4, and a4 is the forth arg in args table!!
@@ -80,7 +77,7 @@ int _write(int fd, void *buf, size_t count) {
 
 void *_sbrk(intptr_t increment) {
   int ret;
-  ret = _syscall_(SYS_brk,program_break + increment,0,0);
+  ret = _syscall_(SYS_brk,program_break, increment,0);
   if(ret == 0){
     program_break += increment;
     return (void *)(program_break - increment);

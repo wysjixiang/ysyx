@@ -7,71 +7,73 @@ static PCB pcb_boot = {};
 PCB *current = NULL;
 
 void naive_uload(PCB *pcb, const char *filename);
-Context* schedule(Context *prev);
+Context *schedule(Context *prev);
 uintptr_t loader(PCB *pcb, const char *filename);
-void* new_page(size_t nr_page);
+void *new_page(size_t nr_page);
 
-void switch_boot_pcb() {
+void switch_boot_pcb()
+{
   current = &pcb_boot;
 }
 
-void hello_fun(void *arg) {
+void hello_fun(void *arg)
+{
   int j = 1;
-  while (1) {
+  while (1)
+  {
     Log("Hello World from Nanos-lite with arg '0x%lx' for the %dth time!", (uintptr_t)arg, j);
-    j ++;
+    j++;
     yield();
   }
 }
 
-void test(void *arg){
-  while(1){
+void test(void *arg)
+{
+  while (1)
+  {
     printf("Test!\n");
     yield();
   }
 }
 
+void context_uload(PCB *_pcb, const char *filename, char *argv[], char *envp[])
+{
 
-void context_uload(PCB *_pcb, const char *filename, char *argv[], char *envp[]){
+  protect(&_pcb->as);
+  // now we get the user virtual area
 
-  uintptr_t pcb_begin = (uintptr_t)_pcb;
-  uintptr_t pcb_end = pcb_begin + sizeof(PCB);
-  _pcb->as.area.start = (void *)pcb_begin;
-  _pcb->as.area.end = (void *)pcb_end;
-
-
-  uintptr_t _heap_end = (uintptr_t)new_page(8) + PGSIZE*8;
-
-  Context *_p = (Context *)(pcb_end - 36*8);
-  _p->GPR_a0 = _heap_end;
-
+  // stack space
+  // issue here!!!
+  Area stack;
+  stack.end = _pcb->as.area.end;
+  stack.start = stack.end - 8 * PGSIZE; //32 KB
 
   // before loader, you need to copy argv and envp args;
   static char arg0[64];
   static char arg1[64];
   static char *pp[2];
-  if(argv == NULL || argv[0] == NULL || argv[1] == NULL){
+  if (argv == NULL || argv[0] == NULL || argv[1] == NULL)
+  {
 
     pp[0] = NULL;
     pp[1] = NULL;
-
-  } else{
-    strcpy(arg0,argv[0]);
-    strcpy(arg1,argv[1]);
+  }
+  else
+  {
+    strcpy(arg0, argv[0]);
+    strcpy(arg1, argv[1]);
     pp[0] = arg0;
     pp[1] = arg1;
-  
-    printf("name = %s\n",pp[0]);
-    printf("name = %s\n",pp[1]);
-  }
-  uintptr_t _entry = loader(NULL, filename);
-  _pcb->cp = ucontext(&_pcb->as,_pcb->as.area, (void *)_entry,pp, envp);
 
+    printf("name = %s\n", pp[0]);
+    printf("name = %s\n", pp[1]);
+  }
+  uintptr_t _entry = loader(_pcb, filename);
+  _pcb->cp = ucontext(&_pcb->as, stack, (void *)_entry, pp, envp);
 }
 
-
-
-void context_kload(PCB *_pcb,void (*entry)(void *), void *arg){
+void context_kload(PCB *_pcb, void (*entry)(void *), void *arg)
+{
 
   uintptr_t pcb_begin = (uintptr_t)_pcb;
   uintptr_t pcb_end = pcb_begin + sizeof(PCB);
@@ -81,13 +83,13 @@ void context_kload(PCB *_pcb,void (*entry)(void *), void *arg){
   _pcb->cp = kcontext(_pcb->as.area, entry, arg);
 }
 
-void init_proc() {
+void init_proc()
+{
   context_kload(&pcb[0], hello_fun, (void *)0x100);
-  context_uload(&pcb[1], "/bin/pal",NULL,NULL);
-  //context_kload(&pcb[1], test, 0);
+  context_uload(&pcb[1], "/bin/pal", NULL, NULL);
+  // context_kload(&pcb[1], test, 0);
   switch_boot_pcb();
 }
-
 
 /*
 void init_proc() {
@@ -100,17 +102,18 @@ void init_proc() {
 }
 */
 
-
-Context* schedule(Context *prev) {
+Context *schedule(Context *prev)
+{
   static int pool = 0;
   current->cp = prev;
-  current = &pcb[pool%2];
-  //current = &pcb[1];
+  current = &pcb[pool % 2];
+  // current = &pcb[1];
   pool++;
 
   return current->cp;
 }
 
-PCB *get_upcb(){
+PCB *get_upcb()
+{
   return &pcb[1];
 }

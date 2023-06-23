@@ -20,12 +20,12 @@ void* new_page(size_t nr_page);
 
 
 static bool Elf_MagicCheck(Elf64_Ehdr elf_head);
-uintptr_t Load_img(const char* ElfFile);
+uintptr_t Load_img(PCB *pcb, const char* ElfFile);
 
 
 uintptr_t loader(PCB *pcb, const char *filename) {
 
-  uintptr_t ret = Load_img(filename);
+  uintptr_t ret = Load_img(pcb,filename);
   if(ret == 0){
     printf("Load img failed!\n");
     assert(0);
@@ -41,7 +41,7 @@ void naive_uload(PCB *pcb, const char *filename) {
 }
 
 
-uintptr_t Load_img(const char* ElfFile){
+uintptr_t Load_img(PCB *pcb, const char* ElfFile){
 
   // open file to get pid
   uintptr_t index = sys_open((uintptr_t)ElfFile);
@@ -65,7 +65,6 @@ uintptr_t Load_img(const char* ElfFile){
 	//Elf64_Phdr *phdr = (Elf64_Phdr *)malloc(sizeof(Elf64_Phdr) * elf_head.e_phnum);
 
 	Elf64_Phdr *phdr = (Elf64_Phdr *)new_page(1);
-  printf("phdr addr = %lx\n",(uintptr_t)phdr);
   
   // move the pointer to the phoff!
   if(sys_lseek(index,elf_head.e_phoff,0) == -1){
@@ -75,17 +74,45 @@ uintptr_t Load_img(const char* ElfFile){
   sys_read(index,(uintptr_t)phdr,sizeof(Elf64_Phdr) * elf_head.e_phnum);
   //ramdisk_read( (void *)phdr, file_table[index].disk_offset + elf_head.e_phoff, sizeof(Elf64_Phdr) * elf_head.e_phnum);
   // for now, we get the phdr info
+
+  uintptr_t p_begin = 0;
+  uintptr_t p_end = 0;
+
+
+  // get the data addr and length
 	for(int i=0;i<elf_head.e_phnum;i++){
     if(phdr[i].p_type == PT_LOAD){
+      if(p_begin == 0){
+        p_begin = phdr[i].p_paddr;
+      }
+      p_end = phdr[i].p_paddr + phdr[i].p_memsz;
+    }
+	}
 
+  uintptr_t num_pages = ((p_end - p_begin)%PGSIZE == 0) ? (p_end - p_begin)/PGSIZE :(p_end - p_begin)/PGSIZE + 1;
+  void *va = (void *)p_begin;
+
+  void *pa = new_page(num_pages);
+  uintptr_t pa_start = (uintptr_t)pa;
+
+  for(;va < (void *)p_end; va += PGSIZE){
+    map(&pcb->as, va, pa, 0);
+    //printf("va = %lx, pa = %lx\n",(uintptr_t)va, (uintptr_t)pa);
+    pa +=PGSIZE;
+  }
+	for(int i=0;i<elf_head.e_phnum;i++){
+    if(phdr[i].p_type == PT_LOAD){
       
-      /*
-      printf("No.%d\n",i);
-      printf("type:%d, offset:%lx, vaddr:%lx, paddr:%lx, fsize:%lx, msize:%lx\n",phdr[i].p_type, phdr[i].p_offset ,phdr[i].p_vaddr,
-      phdr[i].p_paddr,phdr[i].p_filesz,phdr[i].p_memsz);
-      */
-      
-      uintptr_t p_addr = phdr[i].p_paddr;
+      uintptr_t p_addr = phdr[i].p_paddr - p_begin + pa_start;
+
+printf("p_paddr = %lx\n",phdr[i].p_paddr);
+printf("p_offset = %lx\n",phdr[i].p_offset);
+printf("filesz = %lx\n",phdr[i].p_filesz);
+printf("memsz = %lx\n",phdr[i].p_memsz);
+printf("p_begin = %lx\n",p_begin);
+printf("pa_start = %lx\n",pa_start);
+
+
       // move the pointer to the offset!
       if(sys_lseek(index,phdr[i].p_offset,0) == -1){
           printf("error!\n");
@@ -94,14 +121,16 @@ uintptr_t Load_img(const char* ElfFile){
       sys_read(index,p_addr,phdr[i].p_filesz);
       //ramdisk_read( (void *)p_addr, file_table[index].disk_offset + phdr[i].p_offset, phdr[i].p_filesz);
       // zero set from filesz to memsz
+      
+      // right now, you still working on kernel space!!! so you need write data to paddr,not vaddr!!
+      // since now the satp has not yet been set to user space!
       memset((void *)(p_addr+phdr[i].p_filesz), 0, phdr[i].p_memsz - phdr[i].p_filesz);
 
     }
 	}
 
-  free(phdr);
+  //free(phdr);
   return elf_head.e_entry;
-
 }
 
 static bool Elf_MagicCheck(Elf64_Ehdr elf_head){

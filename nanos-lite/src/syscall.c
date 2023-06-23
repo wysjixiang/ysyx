@@ -25,9 +25,11 @@ uintptr_t sys_read(uintptr_t fd,uintptr_t buf,uintptr_t len);
 uintptr_t sys_lseek(uintptr_t fd,uintptr_t offset,uintptr_t whence);
 uintptr_t sys_write(uintptr_t fd,uintptr_t buf,uintptr_t len);
 uintptr_t sys_execve(uintptr_t fname, uintptr_t argv, uintptr_t envp);
+bool sys_brk(uintptr_t program_break, uintptr_t increment, Context *c);
 int sys_gettimeofday(uintptr_t tv);
 void naive_uload(PCB *pcb, const char *filename);
 void context_uload(PCB *_pcb, const char *filename, char *argv[], char *envp[]);
+void* new_page(size_t nr_page);
 
 Context *do_syscall(Context *c) {
   uintptr_t a[4];
@@ -74,9 +76,7 @@ Context *do_syscall(Context *c) {
       break;
 
     case SYS_brk:
-      
-      // just return 0
-      c->GPR_a0 = 0;
+      c->GPR_a0 = sys_brk(a[0],a[1],c);
       break;
 
     case SYS_gettimeofday:
@@ -209,5 +209,47 @@ uintptr_t sys_execve(uintptr_t fname, uintptr_t argv, uintptr_t envp){
   context_uload(get_upcb(), (char *)fname,(char **)argv,(char **)envp);
   switch_boot_pcb();
   yield();
+  return 0;
+}
+
+static uintptr_t program_ptr = 0;
+
+bool sys_brk(uintptr_t program_break, uintptr_t increment, Context *c){
+
+  if(increment == 0 || (program_break + increment <= program_ptr)){
+    return 0;
+  }
+
+  void *va = NULL;
+  void *pa = NULL;
+  uintptr_t num_pages = 0;
+
+  if(program_ptr == 0){
+    num_pages = (increment % PGSIZE == 0) ? increment/PGSIZE : increment/PGSIZE + 1;
+    va = (void *)program_break;
+  } else{
+    if((program_ptr & 0xFFF) == 0){
+      num_pages = (increment % PGSIZE == 0) ? increment/PGSIZE : increment/PGSIZE + 1;
+      va = (void *)program_ptr;
+    } else{
+      num_pages = (program_ptr + increment - ((program_ptr >> 12)<<12))/PGSIZE;
+      va = (void *)(((program_ptr >> 12)+1)<<12);
+    }
+  }
+
+  program_ptr = program_break + increment;
+
+  if(num_pages == 0){
+    return 0;
+  }
+  AddrSpace _c;
+  _c.ptr = c->pdir;
+  pa = new_page(num_pages);
+  for(int i=0; i<num_pages; i++){
+    map(&_c,va, pa, 0);
+    va += PGSIZE;
+    pa += PGSIZE;
+  }
+
   return 0;
 }

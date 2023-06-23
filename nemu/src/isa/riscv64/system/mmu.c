@@ -44,7 +44,7 @@ paddr_t isa_mmu_translate(vaddr_t vaddr, int len, int type) {
   uintptr_t p1_data = paddr_read((uintptr_t)p1,8);
 
   // check if this PTE is not available
-  if((p1_data & 0xF) == 1){
+  if((p1_data & 0xF) == 1 && (p1_data >> 63 == 1)){
     page2 = (uintptr_t *)(BITS(p1_data,ppn_end,ppn_begin) << 12);
   } else{
     printf("Error when search PTE-1 table\n");
@@ -63,22 +63,39 @@ paddr_t isa_mmu_translate(vaddr_t vaddr, int len, int type) {
   uintptr_t *p2 = page2 + va1;
   uintptr_t p2_data = paddr_read((uintptr_t)p2,8);
   // check if this PTE is not available
-  if((p2_data & 0xF) == 1){
+  if((p2_data & 0xF) == 1 && (p2_data >> 63 == 1)){
     page3 = (uintptr_t *)(BITS(p2_data,ppn_end,ppn_begin) << 12);
   } else{
     printf("Error when search PTE-2 table\n");
     printf("vaddr = %lx\n",vaddr);
+    printf("_satp = %lx\n",_satp);
+    printf("vaddr = %lx\n",vaddr);
+    printf("page2_addr = %lx\n",(uintptr_t)page2);
+    printf("p2 = %lx\n",(uintptr_t)p2);
+    printf("p2_data = %lx\n",p2_data);
+    printf("offset = %x\n",offset);
+    printf("va0 = %x\n",va0);
+    printf("va1 = %x\n",va1);
+    printf("va2 = %x\n",va2);
     assert(0);
   }
 
   uintptr_t *p3 = page3 + va0;
   uintptr_t p3_data = paddr_read((uintptr_t)p3,8);
   // check if this PTE is not available
-  if((p3_data & 0xF) == 0xF){
+  if((p3_data & 0xF) == 0xF && (p3_data >> 63 == 1)){
     ret_paddr = (BITS(p3_data,ppn_end,ppn_begin) << 12) + offset;
   } else{
     printf("Error when search PTE-3 table\n");
+    printf("_satp = %lx\n",_satp);
     printf("vaddr = %lx\n",vaddr);
+    printf("page3_addr = %lx\n",(uintptr_t)page3);
+    printf("p3 = %lx\n",(uintptr_t)p3);
+    printf("p3_data = %lx\n",p3_data);
+    printf("offset = %x\n",offset);
+    printf("va0 = %x\n",va0);
+    printf("va1 = %x\n",va1);
+    printf("va2 = %x\n",va2);
     assert(0);
   }
 

@@ -64,39 +64,3 @@ __am_asm_trap:
   addi sp, sp, CONTEXT_SIZE
 
   mret
-/*
-.align 3
-.globl __am_asm_trap
-__am_asm_trap:
-  addi sp, sp, -CONTEXT_SIZE
-
-  # this is a push stack operation to save context
-  MAP(REGS, PUSH)
-
-  csrr t0, mcause
-  csrr t1, mstatus
-  csrr t2, mepc
-
-  STORE t0, OFFSET_CAUSE(sp)
-  STORE t1, OFFSET_STATUS(sp)
-  STORE t2, OFFSET_EPC(sp)
-
-  # set mstatus.MPRV to pass difftest
-  li a0, (1 << 17)
-  or t1, t1, a0
-  csrw mstatus, t1
-
-  # here we use sp as the args to _am_irq_handle. sp is pointing to a Context structure!!
-  mv a0, sp
-  jal __am_irq_handle
-
-  LOAD t1, OFFSET_STATUS(sp)
-  LOAD t2, OFFSET_EPC(sp)
-  csrw mstatus, t1
-  csrw mepc, t2
-
-  MAP(REGS, POP)
-
-  addi sp, sp, CONTEXT_SIZE
-  mret
-*/

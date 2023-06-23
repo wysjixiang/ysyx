@@ -74,6 +74,10 @@ void __am_switch(Context *c) {
 
 void map(AddrSpace *as, void *va, void *pa, int prot) {
 
+  if(((uintptr_t)va >> 12)<<12 == 0x400df000){
+    printf("nonono!\n");
+  }
+
   uintptr_t *page1= (uintptr_t *)as->ptr;
   uintptr_t *page2 = NULL;
   uintptr_t *page3 = NULL;
@@ -81,60 +85,70 @@ void map(AddrSpace *as, void *va, void *pa, int prot) {
   uint32_t va0 = BITS(_va,20,12);
   uint32_t va1 = BITS(_va,29,21);
   uint32_t va2 = BITS(_va,38,30);
-
   uintptr_t *p1 = page1 + va2;
   #define ppn_end 53
   #define ppn_begin 10
 
   // if this page is already set
-  if((*p1 & 0x1) == 1){
+  if((*p1 & 0xF) == 1 && (*p1 >> 63 == 1)){
     page2 = (uintptr_t *)(BITS(*p1,ppn_end,ppn_begin) << 12);
   } else{
     page2 = (uintptr_t *)pgalloc_usr(PGSIZE);
     // setting this PTE
     *p1 = (((uintptr_t)page2 >> 12) << 10) | 1ull << 63 | 0x1;
   }
-
   uintptr_t *p2 = page2 + va1;
   // if this page is already set
-  if((*p2 & 0x1) == 1){
+  if((*p2 & 0xF) == 1 && (*p2 >> 63 == 1)){
     page3 = (uintptr_t *)(BITS(*p2,ppn_end,ppn_begin) << 12);
   } else{
     page3 = (uintptr_t *)pgalloc_usr(PGSIZE);
     // setting this PTE
     *p2 = (((uintptr_t)page3 >> 12) << 10) | 1ull << 63 | 0x1;
   }
-
   uintptr_t *p3 = page3 + va0;
   // if this page is already set
-  if((*p3 & 0x1) == 1){
-    printf("Error when paging!\n");
-    assert(0);
+  if((*p3 & 0xF) == 0xF && (*p3 >> 63 == 1)){
+    //printf("Already set\n");
+    return ;
+    //printf("Error when paging!\n");
+    //assert(0);
   } else{
     *p3 = (((uintptr_t)pa >> 12) << 10) | 1ull << 63 | 0xF;
   }
-
 }
 
 
 
 Context *ucontext(AddrSpace *as, Area kstack, void *entry,char *argv[], char *envp[]) {
-  uintptr_t _end = (uintptr_t )kstack.end;
+  void *va = kstack.start;
+  void *pa = NULL;
 
-  uintptr_t p = _end - 36*sizeof(uintptr_t);
+  uintptr_t num_pages = (((uintptr_t)(kstack.end - kstack.start))%PGSIZE == 0)? (uintptr_t)(kstack.end - kstack.start)/PGSIZE : ((uintptr_t)(kstack.end - kstack.start)/PGSIZE + 1);
+  pa = pgalloc_usr(num_pages*PGSIZE);
+  for (; va < kstack.end; va += PGSIZE)
+  {
+    map(as, va, pa, 0);
+    pa +=PGSIZE;
+  }
+  // must ensure that the start and end is 4K aligned!!!
+  uintptr_t p_end = (uintptr_t)pa;
+  uintptr_t p_content = p_end - 36*sizeof(uintptr_t);
+  uintptr_t v_content = (uintptr_t)kstack.end - 36*sizeof(uintptr_t);
 
-  uintptr_t *data = (uintptr_t *)malloc(2*8);
+  //uintptr_t *data = (uintptr_t *)malloc(2*8);
+  uintptr_t *data = (uintptr_t *)pgalloc_usr(PGSIZE);
   data[0] = (uintptr_t)argv;
   data[1] = (uintptr_t)envp;
 
   // init sp
-  Context *content = (Context *)p;
+  Context *content = (Context *)p_content;
   #define sp_pos 2
   #define a0_pos 10
   content->GPR_a1 = (uintptr_t)data;
-  content->gpr[sp_pos] = p;
+  content->gpr[sp_pos] = v_content;
   content->mstatus = 0xa00001800;
   content->mepc = (uintptr_t)entry - 4;
-
-  return (Context *)p;
+  content->pdir = as->ptr;
+  return (Context *)p_content;
 }

@@ -32,6 +32,12 @@ int atoi(const char* nptr) {
 extern char _heap_start;
 static void* addr = (void*)&_heap_start;
 void *malloc(size_t size) {
+
+  // since malloc will impact pgalloc and new_page function
+  // so do not use it!
+  printf("Do not use malloc\n");
+  assert(0);
+
   // On native, malloc() will be called during initializaion of C runtime.
   // Therefore do not call panic() here, else it will yield a dead recursion:
   //   panic() -> putchar() -> (glibc) -> malloc() -> panic()
