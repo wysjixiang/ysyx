@@ -86,6 +86,7 @@ void context_kload(PCB *_pcb, void (*entry)(void *), void *arg)
 void init_proc()
 {
   context_kload(&pcb[0], hello_fun, (void *)0x100);
+  //context_uload(&pcb[1], "/bin/bird", NULL, NULL);
   context_uload(&pcb[1], "/bin/pal", NULL, NULL);
   // context_kload(&pcb[1], test, 0);
   switch_boot_pcb();

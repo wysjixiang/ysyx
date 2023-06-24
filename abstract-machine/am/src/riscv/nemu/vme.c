@@ -74,10 +74,6 @@ void __am_switch(Context *c) {
 
 void map(AddrSpace *as, void *va, void *pa, int prot) {
 
-  if(((uintptr_t)va >> 12)<<12 == 0x400df000){
-    printf("nonono!\n");
-  }
-
   uintptr_t *page1= (uintptr_t *)as->ptr;
   uintptr_t *page2 = NULL;
   uintptr_t *page3 = NULL;
