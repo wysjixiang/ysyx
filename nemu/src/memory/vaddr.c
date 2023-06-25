@@ -39,5 +39,12 @@ void vaddr_write(vaddr_t addr, int len, word_t data) {
   } else{
     _addr =  isa_mmu_translate(addr,0,0);
   }
+
+/*
+if(addr == 0x8016B000){
+  printf("len = %d, data = %lx\n",len,data);
+}
+*/
+
   paddr_write(_addr, len, data);
 }

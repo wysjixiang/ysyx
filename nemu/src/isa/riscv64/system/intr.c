@@ -14,11 +14,23 @@
 ***************************************************************************************/
 
 #include <isa.h>
+#include <utils.h>
+
+
+#define MIE 3
+#define MPIE 7
 
 word_t isa_raise_intr(word_t NO, vaddr_t epc) {
   /* TODO: Trigger an interrupt/exception with ``NO''.
    * Then return the address of the interrupt/exception vector.
    */
+
+  // save MIE to MPIE & set MIE to 0
+  uintptr_t mie = (riscv64_csr.csr[CSR_MSTATUS] >> MIE) & 0x1;
+  riscv64_csr.csr[CSR_MSTATUS] = riscv64_csr.csr[CSR_MSTATUS] & (~((uintptr_t)(1<<MPIE))); 
+  riscv64_csr.csr[CSR_MSTATUS] = riscv64_csr.csr[CSR_MSTATUS] | (((uintptr_t)(mie<<MPIE))); 
+  riscv64_csr.csr[CSR_MSTATUS] = riscv64_csr.csr[CSR_MSTATUS] & (~((uintptr_t)(1<<MIE))); 
+  //
   riscv64_csr.csr[CSR_MCAUSE] = NO;
   riscv64_csr.csr[CSR_MEPC] = epc;
 
@@ -33,6 +45,25 @@ word_t isa_raise_intr(word_t NO, vaddr_t epc) {
   return riscv64_csr.csr[CSR_MTVEC];
 }
 
+
+// 10ms time_intr
+#define IRQ_TIMER 0x8000000000000007
+
 word_t isa_query_intr() {
-  return INTR_EMPTY;
+  if(cpu.INTR == true && ((riscv64_csr.csr[CSR_MSTATUS] >> MIE) & 0x1) == 1){
+    cpu.INTR = false;
+    return IRQ_TIMER;
+  } else{
+    return INTR_EMPTY;
+  }
+}
+
+void mstatus_recovery(){
+
+  // recover MIE from MPIE & set MPIE to 1
+  uintptr_t mpie = (riscv64_csr.csr[CSR_MSTATUS] >> MPIE) & 0x1;
+  riscv64_csr.csr[CSR_MSTATUS] = riscv64_csr.csr[CSR_MSTATUS] & (~((uintptr_t)(1<<MIE))); 
+  riscv64_csr.csr[CSR_MSTATUS] = riscv64_csr.csr[CSR_MSTATUS] | (((uintptr_t)(mpie<<MIE))); 
+  riscv64_csr.csr[CSR_MSTATUS] = riscv64_csr.csr[CSR_MSTATUS] | (((uintptr_t)(1<<MPIE))); 
+  //
 }

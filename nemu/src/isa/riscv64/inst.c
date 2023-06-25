@@ -35,6 +35,7 @@ static uint16_t csr_index_csr[] =
 
 // extern func call or ret func from monitor.c
 void FuncCallRet(int rd,int rs1, uint64_t addr, char type);
+void mstatus_recovery();
 
 enum {
   TYPE_I, TYPE_U, TYPE_S,
@@ -268,7 +269,7 @@ static void decode_operand(Decode *s, int *rd, word_t *src1, word_t *src2, word_
   /* N type inst   */ \
   INSTPAT("0000000 00001 00000 000 00000 11100 11", ebreak , N, NEMUTRAP(s->pc, R(10))); \
   INSTPAT("0000000 00000 00000 000 00000 11100 11", ecall , N, s->dnpc = isa_raise_intr(gpr(17),s->pc)); \
-  INSTPAT("0011000 00010 00000 000 00000 11100 11", mret , N, s->dnpc = riscv64_csr.csr[CSR_MEPC]); \
+  INSTPAT("0011000 00010 00000 000 00000 11100 11", mret , N, s->dnpc = riscv64_csr.csr[CSR_MEPC], mstatus_recovery()); \
   INSTPAT("??????? ????? ????? 001 ????? 11100 11", CSRRW , C, \
     riscv64_csr.csr[csr_index] = src1, R(rd) = csr_val); \
   INSTPAT("??????? ????? ????? 010 ????? 11100 11", CSRRS , C, \

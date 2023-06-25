@@ -154,7 +154,7 @@ Context *ucontext(AddrSpace *as, Area kstack, void *entry,char *argv[], char *en
   #define a0_pos 10
   content->GPR_a1 = (uintptr_t)data;
   content->gpr[sp_pos] = v_content;
-  content->mstatus = 0xa00001800;
+  content->mstatus = 0xa00001880;
   content->mepc = (uintptr_t)entry - 4;
   content->pdir = as->ptr;
   return (Context *)p_content;

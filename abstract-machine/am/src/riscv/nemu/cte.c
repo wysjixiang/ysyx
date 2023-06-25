@@ -7,6 +7,7 @@ static Context* (*user_handler)(Event, Context*) = NULL;
 void __am_get_cur_as(Context *c);
 void __am_switch(Context *c);
 
+#define IRQ_TIMER 0x8000000000000007
 
 // this args C is got from __am_asm_trap
 // if you get into it, you will find that c is the context before ecall
@@ -14,8 +15,10 @@ Context* __am_irq_handle(Context *c) {
 
   __am_get_cur_as(c);
 
+
   if (user_handler) {
     Event ev = {0};
+
     switch (c->mcause) {
 
       // mcause is what you set at csr.mcause 
@@ -29,6 +32,10 @@ Context* __am_irq_handle(Context *c) {
         ev.event = EVENT_SYSCALL;
         break;
 
+      case IRQ_TIMER:
+        ev.event = EVENT_IRQ_TIMER;
+        break;
+
       default: 
       ev.event = EVENT_ERROR; break;
     }
@@ -36,7 +43,6 @@ Context* __am_irq_handle(Context *c) {
     c = user_handler(ev, c);
     assert(c != NULL);
   }
-
   __am_switch(c);
   return c;
 }
@@ -71,7 +77,7 @@ Context *kcontext(Area kstack, void (*entry)(void *), void *arg) {
   #define a0_pos 10
   content->gpr[a0_pos] = (uintptr_t)arg;
   content->gpr[sp_pos] = p;
-  content->mstatus = 0xa00001800;
+  content->mstatus = 0xa00001880;
   content->mepc = (uintptr_t)entry - 4;
   content->pdir = NULL;
 

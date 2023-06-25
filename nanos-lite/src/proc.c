@@ -21,9 +21,10 @@ void hello_fun(void *arg)
   int j = 1;
   while (1)
   {
-    Log("Hello World from Nanos-lite with arg '0x%lx' for the %dth time!", (uintptr_t)arg, j);
+    //Log("Hello World from Nanos-lite with arg '0x%lx' for the %dth time!", (uintptr_t)arg, j);
+    printf("Hello World from Nanos-lite with arg '0x%lx' for the %dth time!\n", (uintptr_t)arg, j);
     j++;
-    yield();
+    //yield();
   }
 }
 
@@ -32,7 +33,6 @@ void test(void *arg)
   while (1)
   {
     printf("Test!\n");
-    yield();
   }
 }
 
@@ -75,12 +75,21 @@ void context_uload(PCB *_pcb, const char *filename, char *argv[], char *envp[])
 void context_kload(PCB *_pcb, void (*entry)(void *), void *arg)
 {
 
+
+  Area kstack;
+  kstack.start = (void *)_pcb;
+  kstack.end = (void *)_pcb + sizeof(PCB);
+
+
+
+/*
   uintptr_t pcb_begin = (uintptr_t)_pcb;
   uintptr_t pcb_end = pcb_begin + sizeof(PCB);
   _pcb->as.area.start = (void *)pcb_begin;
   _pcb->as.area.end = (void *)pcb_end;
+*/
 
-  _pcb->cp = kcontext(_pcb->as.area, entry, arg);
+  _pcb->cp = kcontext(kstack, entry, arg);
 }
 
 void init_proc()
@@ -89,9 +98,6 @@ void init_proc()
   //context_uload(&pcb[1], "/bin/bird", NULL, NULL);
   context_uload(&pcb[1], "/bin/hello", NULL, NULL);
   context_uload(&pcb[2], "/bin/bird", NULL, NULL);
-
-printf("Thread create!\n");
-
   // context_kload(&pcb[1], test, 0);
   switch_boot_pcb();
 }
@@ -109,12 +115,10 @@ void init_proc() {
 
 Context *schedule(Context *prev)
 {
-  static int pool = 0;
+  static uint32_t pool = 0;
   current->cp = prev;
   current = &pcb[pool % 3];
-  // current = &pcb[1];
-  pool++;
-
+  pool ++;
   return current->cp;
 }
 

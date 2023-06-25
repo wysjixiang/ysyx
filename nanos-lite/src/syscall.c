@@ -64,7 +64,6 @@ Context *do_syscall(Context *c) {
 
     case SYS_write:
 
-      yield();
       // right now. this function is not well behaved!!
       // we just return the size it wants to write, but not consider some cases!!
       // if meet bugs, remember to modify!
@@ -205,7 +204,8 @@ int sys_gettimeofday(uintptr_t tv){
 
 
 uintptr_t sys_execve(uintptr_t fname, uintptr_t argv, uintptr_t envp){
- 
+  
+  assert(0);
   context_uload(get_upcb(), (char *)fname,(char **)argv,(char **)envp);
   switch_boot_pcb();
   yield();
