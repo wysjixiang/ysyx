@@ -87,7 +87,11 @@ void init_proc()
 {
   context_kload(&pcb[0], hello_fun, (void *)0x100);
   //context_uload(&pcb[1], "/bin/bird", NULL, NULL);
-  context_uload(&pcb[1], "/bin/pal", NULL, NULL);
+  context_uload(&pcb[1], "/bin/hello", NULL, NULL);
+  context_uload(&pcb[2], "/bin/bird", NULL, NULL);
+
+printf("Thread create!\n");
+
   // context_kload(&pcb[1], test, 0);
   switch_boot_pcb();
 }
@@ -107,7 +111,7 @@ Context *schedule(Context *prev)
 {
   static int pool = 0;
   current->cp = prev;
-  current = &pcb[pool % 2];
+  current = &pcb[pool % 3];
   // current = &pcb[1];
   pool++;
 

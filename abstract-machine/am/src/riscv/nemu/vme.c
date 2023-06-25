@@ -105,11 +105,22 @@ void map(AddrSpace *as, void *va, void *pa, int prot) {
   uintptr_t *p3 = page3 + va0;
   // if this page is already set
   if((*p3 & 0xF) == 0xF && (*p3 >> 63 == 1)){
-    //printf("Already set\n");
+    /*
+    if(*p3 != ((((uintptr_t)pa >> 12) << 10) | 1ull << 63 | 0xF)){
+      printf("MMU map error!\n");
+      printf("Origin *p3 = %lx, New pa = %lx, New val = %lx\n",*p3,pa,((((uintptr_t)pa >> 12) << 10) | 1ull << 63 | 0xF));
+      assert(0);
+    }
+    */
     return ;
-    //printf("Error when paging!\n");
-    //assert(0);
   } else{
+
+    // test
+    if(pa == NULL){
+      pa = (void *)pgalloc_usr(PGSIZE);
+    }
+    //test
+
     *p3 = (((uintptr_t)pa >> 12) << 10) | 1ull << 63 | 0xF;
   }
 }

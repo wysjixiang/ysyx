@@ -137,6 +137,9 @@ static void execute(uint64_t n) {
     else ItraceIndex++;
 
     IFDEF(CONFIG_DEVICE, device_update());
+
+//for intr
+
   }
 }
 

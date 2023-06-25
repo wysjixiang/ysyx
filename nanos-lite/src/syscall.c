@@ -212,13 +212,35 @@ uintptr_t sys_execve(uintptr_t fname, uintptr_t argv, uintptr_t envp){
   return 0;
 }
 
-static uintptr_t program_ptr = 0;
+//static uintptr_t program_ptr = 0;
 
+bool sys_brk(uintptr_t program_break, uintptr_t increment, Context *c){
+
+  AddrSpace _c;
+  _c.ptr = c->pdir;
+
+  if(increment == 0){
+    return 0;
+  }
+
+  void *va = (void *)program_break;
+
+  for(; (uintptr_t)va < program_break + increment;va+=PGSIZE){
+    map(&_c,va,NULL, 0);
+  }
+
+  return 0;
+}
+
+/*
 bool sys_brk(uintptr_t program_break, uintptr_t increment, Context *c){
 
   if(increment == 0 || (program_break + increment <= program_ptr)){
     return 0;
   }
+
+//printf("program_break = %lx, increment = %lx\n",program_break,increment);
+
 
   void *va = NULL;
   void *pa = NULL;
@@ -253,3 +275,4 @@ bool sys_brk(uintptr_t program_break, uintptr_t increment, Context *c){
 
   return 0;
 }
+*/
