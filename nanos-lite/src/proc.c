@@ -97,7 +97,7 @@ void init_proc()
   context_kload(&pcb[0], hello_fun, (void *)0x100);
   //context_uload(&pcb[1], "/bin/bird", NULL, NULL);
   context_uload(&pcb[1], "/bin/hello", NULL, NULL);
-  context_uload(&pcb[2], "/bin/bird", NULL, NULL);
+  context_uload(&pcb[2], "/bin/menu", NULL, NULL);
   // context_kload(&pcb[1], test, 0);
   switch_boot_pcb();
 }
@@ -116,13 +116,25 @@ void init_proc() {
 Context *schedule(Context *prev)
 {
   static uint32_t pool = 0;
+  static uint32_t num_pal = 0;
   current->cp = prev;
   current = &pcb[pool % 3];
-  pool ++;
+
+  if(pool%3 == 2){
+    if(num_pal > 10){
+      num_pal = 0;
+      pool++;
+    } else{
+      num_pal++;
+    }
+  } else{
+    pool++;
+  }
+
   return current->cp;
 }
 
 PCB *get_upcb()
 {
-  return &pcb[1];
+  return &pcb[2];
 }

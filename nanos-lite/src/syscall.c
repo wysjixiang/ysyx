@@ -103,7 +103,7 @@ uintptr_t sys_open(uintptr_t name){
     }
   }
 
-  printf("File not found!\n");
+  printf("File:%s not found!\n",(char *)name);
   assert(0);
   return -1;
 }
@@ -205,10 +205,8 @@ int sys_gettimeofday(uintptr_t tv){
 
 uintptr_t sys_execve(uintptr_t fname, uintptr_t argv, uintptr_t envp){
   
-  assert(0);
   context_uload(get_upcb(), (char *)fname,(char **)argv,(char **)envp);
   switch_boot_pcb();
-  yield();
   return 0;
 }
 
