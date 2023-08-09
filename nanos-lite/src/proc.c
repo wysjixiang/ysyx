@@ -43,7 +43,6 @@ void context_uload(PCB *_pcb, const char *filename, char *argv[], char *envp[])
   // now we get the user virtual area
 
   // stack space
-  // issue here!!!
   Area stack;
   stack.end = _pcb->as.area.end;
   stack.start = stack.end - 8 * PGSIZE; //32 KB

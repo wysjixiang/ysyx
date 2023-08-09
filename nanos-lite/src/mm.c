@@ -7,6 +7,8 @@ static void* pg_alloc(int n);
 
 static void *pf = NULL;
 
+
+#ifdef USING_MEM_POOL
 struct MemPool {
   bool used;
   void *addr;
@@ -142,6 +144,7 @@ void slab_mem_init(){
   malloc2048_init();
   malloc4096_init();
 }
+#endif
 
 void* new_page(size_t nr_page) {
   void *ret = pf;

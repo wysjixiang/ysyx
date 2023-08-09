@@ -64,3 +64,17 @@ __am_asm_trap:
   addi sp, sp, CONTEXT_SIZE
 
   mret
+
+.align 3
+.globl __spin__lock__
+__spin__lock__:
+      lw                a4,0(a0)
+      li                a5,1
+      amoswap.d.aq      a5,a5,(a4)
+      mv                a3,a5
+      bnez              a3,__spin__lock__
+
+.align 3
+.globl __spin__release__
+__spin__release__:
+      amoswap.d.rl      x0,x0,(a0)

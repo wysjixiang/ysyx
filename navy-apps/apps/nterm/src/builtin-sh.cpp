@@ -30,6 +30,7 @@ static int sh_handle_cmd(const char *cmd) {
   } else{
     printf("not reco\n");
   }
+  return 0;
 }
 
 void builtin_sh_run() {
